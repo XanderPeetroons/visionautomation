@@ -10,7 +10,7 @@ from NI_DAQ import AOport
 from NI_DAQ import AOport2
 from labjack import ljm
 from MACEEXCELLOG import create_excel_mace, save_macelog_excel, last_shot
-
+g
 
 class GUI:
     def __init__(self, root, _IO):
