@@ -35,3 +35,10 @@ cv.imshow('Countors Drawn', blank)
 
 cv.waitKey(0)
 
+def get_array(file):
+    return cv.imread(file)
+
+def get_processed_array(img):
+    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    ret, thresh = cv.threshold(gray,125,125, cv.THRESH_BINARY)
+    return thresh
