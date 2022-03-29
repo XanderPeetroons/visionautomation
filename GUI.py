@@ -1,12 +1,13 @@
 # GUI
-from tkinter.tix import IMAGETEXT
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import time
 import cv2
-# from Example_mv01 import *
+from Example_mv01 import *
 import sys
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
 # Resolution of the screen used
 resolutionx = 3240
@@ -28,27 +29,20 @@ class GUI(QMainWindow):
         self.scene = Scene()
         self.setCentralWidget(self.scene)
 
+class MplCanvas(FigureCanvasQTAgg):
+    def __init__(self, parent=None,width=5,height=4,dpi=100):
+        fig = Figure(figsize=(width,height),dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
 
-class Slider(QGraphicsRectItem):
-    def __init__(self,x,y,w,h):
-        super().__init__(x,y,w,h)
-        self.setPen(Qt.darkGreen)
-        self.setBrush(Qt.darkGreen)
-
-    def updateSliderPosition(self, state, nbstates=5):
-        lengthBar = (600/3240 * resolutionx) - (20/3240 * resolutionx)
-        deltax = lengthBar/nbstates
-        self.setPos(0 + state*deltax,0)
 
 
 class Scene(QGraphicsView):
     def __init__(self):
         super().__init__()
-        self.images()
-        self.sceneview = QGraphicsScene()
-        self.setSceneRect(0,0,5,5)
-        self.slider = Slider(0,0,20/3240 * resolutionx,70/2160 * resolutiony)
-        self.sceneview.addItem(self.slider)
+        self.scener = QGraphicsScene()
+        #self.images()
+        self.plot()
 
 
     def images(self):
@@ -84,10 +78,28 @@ class Scene(QGraphicsView):
         self.labelprocessed.setGeometry(processedx, processedy, 2000, 2000)
         self.labelprocessed.show()
 
+    def plot(self):
+        array = get_array('Photos/mosfet.jpg')
+        processed = get_processed_array(array)
+        blank = get_contours_array(processed)
+        peaks = get_peaks(blank, 250)
+
+        self.figure = Figure()
+        self.canvas = FigureCanvasQTAgg(self.figure)
+
+        # Maybe change to ax as input var for function?
+        ax = self.figure.add_subplot(111)
+        ax.plot(peaks, blank[250,0:640][peaks], "x", c="red")
+        ax.plot(range(0,640), blank[250,0:640])
+        ax.set_title('Profiling of grayscale along the line')
+        ax.set_ylabel('grayscale intensity')
+        ax.set_xlabel('pixel')
+        ax.set_ylim([-5,260])
+        self.canvas.draw()
+        self.scener.addWidget(self.canvas)
+        self.scener.show()
+
     
-
-
-
 
 
 
