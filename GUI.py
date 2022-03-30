@@ -1,4 +1,4 @@
-# GUI
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -9,50 +9,19 @@ import sys
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
-# Resolution of the screen used
-resolutionx = 3240
-resolutiony = 2160
-
-
-class GUI(QMainWindow):
-
+class MyWindow(QMainWindow):
     def __init__(self):
-        super().__init__()
+        super(MyWindow, self).__init__()
+        self.setGeometry(0,0,4000,2000)
+        self.setWindowTitle("Tech")
+        self.initUI()
 
-        # Window Initialization
-        self.setWindowTitle('images')
-    
-        # setting geometry
-        self.setGeometry(0, 0, 0, 0)
-    
-        # Set scene as central widget
-        self.scene = Scene()
-        self.setCentralWidget(self.scene)
-
-class MplCanvas(FigureCanvasQTAgg):
-    def __init__(self, parent=None,width=5,height=4,dpi=100):
-        fig = Figure(figsize=(width,height),dpi=dpi)
-        self.axes = fig.add_subplot(111)
-        super(MplCanvas, self).__init__(fig)
-
-
-
-class Scene(QGraphicsView):
-    def __init__(self):
-        super().__init__()
-        self.scener = QGraphicsScene()
-        #self.images()
-        self.plot()
-
-
-    def images(self):
-
-        # Defining the positions of the images
-        imagex = 0
-        imagey = -500
-        processedx = 800
-        processedy = -500
-
+    def initUI(self):
+        # TEXT IMAGE
+        self.textimage = QLabel(self)
+        self.textimage.setText("Images")
+        self.textimage.move(50,50)
+        """
         # MOSFET IMAGE
         pixmapimage = QPixmap('Photos/mosfet.jpg')
         self.labelimage = QLabel(self)
@@ -60,7 +29,7 @@ class Scene(QGraphicsView):
         self.labelimage.setPixmap(pixmapimage)
 
         # setting geometry to the label
-        self.labelimage.setGeometry(imagex, imagey, 2000, 2000)
+        self.labelimage.setGeometry(0, -500, 2000, 2000)
         self.labelimage.show()
 
 
@@ -75,8 +44,10 @@ class Scene(QGraphicsView):
         self.labelprocessed.setPixmap(pixmapprocessed)
 
         # setting geometry to the label
-        self.labelprocessed.setGeometry(processedx, processedy, 2000, 2000)
+        self.labelprocessed.setGeometry(800, -500, 2000, 2000)
         self.labelprocessed.show()
+        """
+        self.plot()
 
     def plot(self):
         array = get_array('Photos/mosfet.jpg')
@@ -95,31 +66,27 @@ class Scene(QGraphicsView):
         ax.set_ylabel('grayscale intensity')
         ax.set_xlabel('pixel')
         ax.set_ylim([-5,260])
-        self.canvas.draw()
-        self.scener.addWidget(self.canvas)
-        self.scener.show()
+        self.canvas.resize(1000,1000)
+        # self.canvas.draw()
+        # self.canvas.setGeometry(0,0,2000,2000)
+        # self.show()
+        vbox = QVBoxLayout()
+        vbox.addStretch(1)
+        vbox.addWidget(self.canvas)
 
-    
+        self.centralWidget = QWidget()
+        self.centralWidget.setLayout(vbox)
+        self.setCentralWidget(self.centralWidget)
 
-
-
-
+      
 
 if __name__ == "__main__":
-    app = QApplication([])
-    win = GUI()
+    app = QApplication(sys.argv)
+    win = MyWindow()
     win.showMaximized()
     
-    # time.sleep(2)
-    # for i in range(6):
-    #     z = i%6
-    #     win.updateSlider(z,5)
-    # time.sleep(2)
 
-    # app.processEvents()
-    # time.sleep(6)
-    # win.close()
 
-    # app.quit()
+    win.show()
     while True:
         sys.exit(app.exec_())
