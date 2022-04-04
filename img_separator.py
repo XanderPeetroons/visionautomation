@@ -9,25 +9,34 @@ from scipy.signal import find_peaks
 import math
 import pwlf
 
-from Example_mv01 import get_array, get_contours_array
 
+def segment_identifier(img, n_segments=3):
 
-def img_separator (img):
-    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    blur = cv.GaussianBlur(gray,(5,5),5)
-
-    x = np.arange(0,blur.shape[1])
-    y = np.array(list(np.mean(blur[:,j]) for j in range(0,blur.shape[1])))
+    x = np.arange(0, img.shape[1])
+    y = np.array(list(np.mean(img[:,j]) for j in range(0,img.shape[1])))
     
     my_pwlf = pwlf.PiecewiseLinFit(x, y)
-    segment = my_pwlf.fit(3)
+    return my_pwlf.fit(n_segments)
+
+def img_separator(img):
+    segment = segment_identifier(img)
     mid = int((segment[1]+segment[2])/2)
-    img_left = gray[:, :mid+50] # margin of 50 pixel
+
+    img_left = gray[:, :mid+50] ### margin of 50 pixel
     img_right = gray[:, mid-50:]
     return img_left, img_right
 
 
 ### From discussion on Friday
+"""
+Henry commented: I have to remove the import function from Example_mv01.py in order to run GUI.py
+Otherwise it will yield an error of circular import. Sorry!
+"""
+
+"""
+
+def get_array(file):
+    return cv.imread(file)
 
 def rescale(img, scale = 0.75):
     width = int (img.shape[1]*scale)
@@ -91,9 +100,13 @@ def get_contours (img):
     cv.drawContours(blank, contours,-1, (255,255,255), thickness=1)
     return blank
 
-### Spliting the image
-array = get_array('Photos/Photo_Fiber_Obj_10X.tif') 
-img_left, img_right = img_separator (array)
+### Segment the image
+
+array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
+gray = cv.cvtColor(array, cv.COLOR_BGR2GRAY)
+blur = cv.GaussianBlur(gray,(5,5),cv.BORDER_DEFAULT)
+
+img_left, img_right = img_separator (blur)
 left_img = rescale(img_left, scale=0.48)
 
 ### Printing alternatives
@@ -107,12 +120,13 @@ cv.imshow('Left',left_img)
 #cv.imshow('Dibujando los contornos',contoursonly)
 th1, th2, th3 = adapt_thresh_bin (left_img)
 thv1, thv2, thv3 = adapt_thresh_inv_bin (left_img)
-thk1, thk2, thk3 = adapt_thresh_trunc (left_img)
-th01, th02, th03 = adapt_thresh_tozero (left_img)
-th0v1, th0v2, th0v3 = adapt_thresh_inv_tozero (left_img)
-cv.imshow('Binary', th01)
-cv.imshow('Adapt Mean', th02)
-cv.imshow('Adapt Gaussian', th03)
-#cv.imshow('Adapt Gaussian Inv', thv3)
+# thk1, thk2, thk3 = adapt_thresh_trunc (left_img)
+# th01, th02, th03 = adapt_thresh_tozero (left_img)
+# th0v1, th0v2, th0v3 = adapt_thresh_inv_tozero (left_img)
+cv.imshow('Binary', th1)
+cv.imshow('Adapt Mean', th2)
+cv.imshow('Adapt Gaussian', th3)
+# cv.imshow('Adapt Gaussian Inv', thv3)
 
 cv.waitKey(0)
+"""

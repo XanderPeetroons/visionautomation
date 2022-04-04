@@ -17,14 +17,14 @@ class MyWindow(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        # Variable for intersection pixel
-        self.line = 250
+        ### Variable for horizontal pixel
+        self.line = 1000
 
-        # FONT VARIABLE
+        ### FONT VARIABLE
         self.fontvar = QFont('Times', 16)
         self.fontvar.setBold(True)
 
-        # TEXTS
+        ### TEXTS
         self.textimage = QLabel(self)
         self.textimage.setText("Camera Image")
         self.textimage.setFont(self.fontvar)
@@ -40,7 +40,7 @@ class MyWindow(QMainWindow):
         self.textimage.setFont(self.fontvar)
         self.textimage.setGeometry(50,920, 1000,100)
         
-        # MOSFET IMAGE
+        ### CHIP_FIBER IMAGE
         pixmapimage = QPixmap('Photos/Photo_Fiber_Obj_10X.tif')
         pixmapimage = pixmapimage.scaled(700, 700, Qt.KeepAspectRatio)
         self.labelimage = QLabel(self)
@@ -49,10 +49,11 @@ class MyWindow(QMainWindow):
 
 
 
-        # PROCESSED IMAGE
+        ### PROCESSED IMAGE
 
         img = get_array('Photos/Photo_Fiber_Obj_10X.tif')
-        processed_array = get_processed_array(img)
+	## Processed array now will include contour (to compatible with adaptive threshold, which not require contour)
+        processed_array = get_processed_array(img) 
         cv2.imwrite('Photos/Processed_10X.jpg', processed_array)
 
         pixmapprocessed = QPixmap('Photos/Processed_10X.jpg')
@@ -61,7 +62,7 @@ class MyWindow(QMainWindow):
         self.labelprocessed.setPixmap(pixmapprocessed)
         self.labelprocessed.setGeometry(800,200,700,700)
 
-        # BUTTONS
+        ### BUTTONS
         self.bup = QPushButton(self)
         self.bup.setText("+")
         self.bup.clicked.connect(self.clickup)
@@ -80,7 +81,7 @@ class MyWindow(QMainWindow):
         self.textline.setGeometry(1600,490,120,40)
 
 
-        # PLOT
+        ### PLOT
         self.plot()
 
         vboxbuttons = QVBoxLayout()
@@ -115,20 +116,20 @@ class MyWindow(QMainWindow):
     def plot(self):
         array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
         processed = get_processed_array(array)
-        blank = get_contours_array(processed)
-        peaks = get_peaks(blank, self.line)
+        # blank = get_contours_array(processed)
+        peaks = get_peaks(processed, self.line)
 
         self.figure = Figure()
         self.canvas = FigureCanvasQTAgg(self.figure)
 
-        # Maybe change to ax as input var for function?
+        ### Maybe change to ax as input var for function?
         ax = self.figure.add_subplot(111)
-        ax.plot(peaks, blank[self.line,0:640][peaks], "x", c="red")
-        ax.plot(range(0,640), blank[self.line,0:640])
+        ax.plot(peaks, processed[self.line,:][peaks], "x", c="red")
+        ax.plot(range(0, processed.shape[1]), processed[self.line,:])
         ax.set_title('Profiling of grayscale along the line')
-        ax.set_ylabel('grayscale intensity')
-        ax.set_xlabel('pixel')
-        ax.set_ylim([-5,260])
+        ax.set_ylabel('Grayscale intensity')
+        ax.set_xlabel('Pixel')
+        ax.set_ylim([-5,260]) ### Grayscale from 0 to 255
         self.canvas.resize(1000,1000)
         # self.canvas.draw()
         # self.canvas.setGeometry(0,0,2000,2000)
