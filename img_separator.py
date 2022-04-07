@@ -22,8 +22,8 @@ def img_separator(img):
     segment = segment_identifier(img)
     mid = int((segment[1]+segment[2])/2)
 
-    img_left = gray[:, :mid+50] ### margin of 50 pixel
-    img_right = gray[:, mid-50:]
+    img_left = img[:, :mid+50] ### margin of 50 pixel
+    img_right = img[:, mid-50:]
     return img_left, img_right
 
 
