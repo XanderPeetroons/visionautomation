@@ -41,7 +41,7 @@ class MyWindow(QMainWindow):
         self.textimage.setGeometry(50,920, 1000,100)
         
         ### CHIP_FIBER IMAGE
-        pixmapimage = QPixmap('Photos/Photo_Fiber_Obj_20X.tif')
+        pixmapimage = QPixmap('Photos/Photo_Fiber_Obj_10X.tif')
         pixmapimage = pixmapimage.scaled(700, 700, Qt.KeepAspectRatio)
         self.labelimage = QLabel(self)
         self.labelimage.setPixmap(pixmapimage)
@@ -51,7 +51,7 @@ class MyWindow(QMainWindow):
 
         ### PROCESSED IMAGE
 
-        img = get_array('Photos/Photo_Fiber_Obj_20X.tif')
+        img = get_array('Photos/Photo_Fiber_Obj_10X.tif')
 	### Processed array now will include contour (to compatible with adaptive threshold, which not require contour)
         processed_array = get_processed_array(img) 
         cv2.imwrite('Photos/Processed_10X.jpg', processed_array)

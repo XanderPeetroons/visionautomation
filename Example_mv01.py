@@ -17,7 +17,8 @@ def get_canny_edge(img):
 
 def get_adaptive_binary(img):
     th = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY_INV,21,2)
-    return th
+    erode = cv.erode(th, np.ones((5,5)), iterations=1)
+    return erode
 
 def get_binary_array(img):
     segment = segment_identifier(img)
@@ -44,9 +45,10 @@ def get_processed_array(img):
     # processed = get_canny_edge(blur)
     
     ### Adaptive threshold
+    processed = get_adaptive_binary(blur)
 
     ### Binary + contour
-    processed = get_contours_array(get_binary_array(blur))
+    # processed = get_contours_array(get_binary_array(blur))
     return processed
 
 def draw_profiling_line(img, y):
