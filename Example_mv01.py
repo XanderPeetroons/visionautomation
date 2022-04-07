@@ -4,9 +4,10 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 import numpy as np
 import scipy
 from scipy.signal import find_peaks
+from scipy.stats import linregress
 #import utlis
 
-from img_separator import segment_identifier
+from img_separator import *
 
 def get_array(file):
     return cv.imread(file)
@@ -78,6 +79,44 @@ def create_plot(contoured, peaks, y):
     plot = cv.cvtColor(np.asarray(buf),cv.COLOR_RGB2BGR)
     return plot
 
+def get_fiber_angle(img):
+    fiber = img_separator(img)[1]
+    gamma = 20
+    for i in range(256):
+    	lookUpTable[0,i] = np.clip(pow(i / 255.0, gamma) * 255.0, 0, 255)
+    processed = cv.LUT(fiber, lookUpTable)
+    
+    step = -10
+
+    x_data = []
+    y_data = []
+    for j in range(processed.shape[1],0,step):
+        if j < abs(step):
+            break
+        y = np.arange(0,processed.shape[0])
+        x = np.array(list(np.mean(processed[k,j+step:j]) for k in np.arange(0,processed.shape[0])))
+        peaks, _ = find_peaks(x, prominence=50)
+
+        x_data =[j+step/2]*len(peaks)
+        y_data = peaks
+    clustering = GaussianMixture(n_components=3)
+    X = np.array([[i,j] for i,j in zip(x_data, y_data)])
+    labels = clustering.fit_predict(X)
+    min_std = 1.0
+    r = 0.0
+    for j in set(labels):
+        xy = X[labels == j]
+        if len(xy) > 5:
+            slope, intercept, r_value, p_value, std_err = linregress(xy[:,0], xy[:,1])
+            print(j, slope, intercept, r_value, p_value, std_err) 
+            if (std_err <= min_std) & (r_value > 0):
+                min_std = std_err
+                r = r_value
+                deg = np.arctan(slope)/np.pi*180
+    try:                
+        return np.format_float_positional(90-deg, precision=2)
+    except:
+        return "cannot determine the angle"
 
 if __name__ == "__main__":
     ### Original image
