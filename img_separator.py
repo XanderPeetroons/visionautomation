@@ -9,6 +9,9 @@ from scipy.signal import find_peaks
 import math
 import pwlf
 
+## Some definitions:
+## Kernel: matrix that defines size of convolution, weights applied and an anchor point
+## Convolutions: mathematical operations between two functions that create a third function. In OpenCV
 
 def segment_identifier(img, n_segments=3):
 
@@ -42,7 +45,7 @@ if __name__ == "__main__":
         return cv.resize(img, dimensions, interpolation=cv.INTER_AREA)
 
     def canny_edge (img):
-        edges = cv.Canny(img,100,200)
+        edges = cv.Canny(img,10,50) #Arguments:  1) input image, 2) minVal, 3) maxVal, 4) aperture size (default = 3), 5) L2gradient
         return edges
 
     def adapt_thresh_bin (img):
@@ -80,6 +83,12 @@ if __name__ == "__main__":
 
         return th1, th2, th3
 
+    def adapt_thresh_otsu(img):
+        ret1, th1 = cv.threshold(img, 127, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+        #th2 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY + cv.THRESH_OTSU,11,2)
+        #th3 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY + cv.THRESH_OTSU,11,2)
+
+        return th1 #, th2, th3
 
     ### Trying additional image treatments
 
@@ -99,28 +108,31 @@ if __name__ == "__main__":
 
     array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
     gray = cv.cvtColor(array, cv.COLOR_BGR2GRAY)
-    blur = cv.GaussianBlur(gray,(5,5),cv.BORDER_DEFAULT)
+    blur = cv.GaussianBlur(gray,(5,5),cv.BORDER_DEFAULT)  ##box
 
     img_left, img_right = img_separator (blur)
     left_img = rescale(img_left, scale=0.48)
 
     ### Printing alternatives
+
     cv.imshow('Left',left_img)
     cv.imshow('Canny',canny_edge(left_img))
-    sobelx, sobely, sobelxy = sobel_edge(left_img)
+    #sobelx, sobely, sobelxy = sobel_edge(left_img)
     #cv.imshow('SobelX',sobelx) 
     #cv.imshow('SobelY',sobely)
-    cv.imshow('SobelXY',sobelxy)
+    #cv.imshow('SobelXY',sobelxy)
     #contoursonly = get_contours(canny_edge(left_img))
     #cv.imshow('Dibujando los contornos',contoursonly)
-    th1, th2, th3 = adapt_thresh_bin (left_img)
-    thv1, thv2, thv3 = adapt_thresh_inv_bin (left_img)
+    #th1, th2, th3 = adapt_thresh_bin (left_img)
+    #thv1, thv2, thv3 = adapt_thresh_inv_bin (left_img)
     #thk1, thk2, thk3 = adapt_thresh_trunc (left_img)
     #th01, th02, th03 = adapt_thresh_tozero (left_img)
     #th0v1, th0v2, th0v3 = adapt_thresh_inv_tozero (left_img)
-    cv.imshow('Binary', th1)
-    cv.imshow('Adapt Mean', th2)
-    cv.imshow('Adapt Gaussian', th3)
-    #cv.imshow('Adapt Gaussian Inv', thv3)
+    #cv.imshow('Binary', th1)
+    #cv.imshow('Adapt Mean', th2)
+    #cv.imshow('Adapt Gaussian', th3)
+
+    tho = adapt_thresh_otsu (left_img)
+    cv.imshow('Binary', tho)
 
     cv.waitKey(0)
