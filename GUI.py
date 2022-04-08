@@ -45,7 +45,6 @@ class MyWindow(QMainWindow):
         """
         IMAGES
         """
-
         # MOSFET IMAGE
         pixmapimage = QPixmap('Photos/Photo_Fiber_Obj_10X.tif')
         pixmapimage = pixmapimage.scaled(700, 700, Qt.KeepAspectRatio)
@@ -54,9 +53,10 @@ class MyWindow(QMainWindow):
         self.labelimage.setGeometry(20,200,700,700)
 
         # PROCESSED IMAGE
-        img = get_array('Photos/Photo_Fiber_Obj_10X.tif')
-        processed_array = get_processed_array(img)
-        cv2.imwrite('Photos/Processed_10X.jpg', processed_array)
+        # This code only once
+        # img = get_array('Photos/Photo_Fiber_Obj_10X.tif')
+        # processed_array = get_processed_array(img)
+        # cv2.imwrite('Photos/Processed_10X.jpg', processed_array)
 
         pixmapprocessed = QPixmap('Photos/Processed_10X.jpg')
         self.labelprocessed = QLabel(self)
@@ -159,14 +159,17 @@ class MyWindow(QMainWindow):
         self.canvas.resize(1000,1000) 
 
     def clickup(self):
+        """ One pixel up """
         self.line += 1
         self.updateplot()
 
     def clickdown(self):
+        """ One pixel down """
         self.line -= 1
         self.updateplot()
 
     def textchanged(self, text):
+        """ Intersection to the input pixel """
         if text == "" or not isinstance(int(text),int):
             print('not an integer')
         else: 
