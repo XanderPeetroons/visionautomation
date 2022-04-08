@@ -1,26 +1,28 @@
 
+from turtle import width
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-import time
 import cv2
 from Example_mv01 import *
 import sys
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
+
+
 class MyWindow(QMainWindow):
     def __init__(self):
         super(MyWindow, self).__init__()
-        self.setGeometry(0,0,4000,2000)
+        # self.setGeometry(0,0,4000,2000)
         self.setWindowTitle("GUI")
         self.initUI()
 
     def initUI(self):
-        # Variable for intersection pixel
-        self.line = 250
+        ### Variable for horizontal pixel
+        self.line = 1000
 
-        # FONT VARIABLE
+        ### FONT VARIABLE
         self.fontvar = QFont('Times', 16)
         self.fontvar.setBold(True)
 
@@ -30,39 +32,42 @@ class MyWindow(QMainWindow):
         self.textimage = QLabel(self)
         self.textimage.setText("Camera Image")
         self.textimage.setFont(self.fontvar)
-        self.textimage.setGeometry(200,50, 1000,100)
+        self.textimage.setGeometry(int(200/3240*width),int(50/2160*height), int(1000/3240*width),int(100/2160*height))
 
         self.textimage = QLabel(self)
         self.textimage.setText("Processed Image")
         self.textimage.setFont(self.fontvar)
-        self.textimage.setGeometry(960,50, 1000,100)
+        self.textimage.setGeometry(int(960/3240*width),int(50/2160*height), int(1000/3240*width),int(100/2160*height))
 
         self.textimage = QLabel(self)
         self.textimage.setText("Pixel Value on Intersection")
         self.textimage.setFont(self.fontvar)
-        self.textimage.setGeometry(50,920, 1000,100)
+        self.textimage.setGeometry(int(50/3240*width),int(920/2160*height), int(1000/3240*width),int(100/2160*height))
         
         """
         IMAGES
         """
         # MOSFET IMAGE
-        pixmapimage = QPixmap('Photos/Photo_Fiber_Obj_10X.tif')
-        pixmapimage = pixmapimage.scaled(700, 700, Qt.KeepAspectRatio)
+        pixmapimage = QPixmap('Photos/Photo_Fiber_Obj_20X.tif')
+        pixmapimage = pixmapimage.scaled(int(700/3240*width), int(700/2160*height), Qt.KeepAspectRatio)
         self.labelimage = QLabel(self)
         self.labelimage.setPixmap(pixmapimage)
-        self.labelimage.setGeometry(20,200,700,700)
+        self.labelimage.setGeometry(int(20/3240*width),int(200/2160*height),int(700/3240*width),int(700/2160*height))
 
-        # PROCESSED IMAGE
-        # This code only once
-        # img = get_array('Photos/Photo_Fiber_Obj_10X.tif')
-        # processed_array = get_processed_array(img)
-        # cv2.imwrite('Photos/Processed_10X.jpg', processed_array)
+
+
+        ### PROCESSED IMAGE
+
+        img = get_array('Photos/Photo_Fiber_Obj_20X.tif')
+	### Processed array now will include contour (to compatible with adaptive threshold, which not require contour)
+        processed_array = get_processed_array(img) 
+        cv2.imwrite('Photos/Processed_10X.jpg', processed_array)
 
         pixmapprocessed = QPixmap('Photos/Processed_10X.jpg')
         self.labelprocessed = QLabel(self)
-        pixmapprocessed = pixmapprocessed.scaled(700,700,Qt.KeepAspectRatio)
+        pixmapprocessed = pixmapprocessed.scaled(int(700/3240*width),int(700/2160*height),Qt.KeepAspectRatio)
         self.labelprocessed.setPixmap(pixmapprocessed)
-        self.labelprocessed.setGeometry(800,200,700,700)
+        self.labelprocessed.setGeometry(int(800/3240*width),int(200/2160*height),int(700/3240*width),int(700/2160*height))
 
 
         """
@@ -72,19 +77,19 @@ class MyWindow(QMainWindow):
         self.bup = QPushButton(self)
         self.bup.setText("+")
         self.bup.clicked.connect(self.clickup)
-        self.bup.setMaximumSize(120,40)
+        self.bup.setMaximumSize(int(120/3240*width),int(40/2160*height))
         # self.bup.move(1600,430)
 
         self.bdown = QPushButton(self)
         self.bdown.setText("-")
         self.bdown.clicked.connect(self.clickdown)
-        self.bdown.setMaximumSize(120,40)
+        self.bdown.setMaximumSize(int(120/3240*width),int(40/2160*height))
         # self.bdown.move(1600,550)
 
         self.textline = QLineEdit()
         self.textline.textChanged.connect(self.textchanged)
-        self.textline.setMaximumSize(120,40)
-        self.textline.setGeometry(1600,490,120,40)
+        self.textline.setMaximumSize(int(120/3240*width),int(40/2160*height))
+        self.textline.setGeometry(int(1600/3240*width),int(490/2160*height),int(120/3240*width),int(40/2160*height))
 
 
         """ 
@@ -94,9 +99,9 @@ class MyWindow(QMainWindow):
         self.insert_ax()
 
         # Get the picture information and store
-        array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
-        processed = get_processed_array(array)
-        self.blank = get_contours_array(processed)
+        array = get_array('Photos/Photo_Fiber_Obj_20X.tif')
+        self.processed = get_processed_array(array)
+        self.blank = get_contours_array(self.processed)
         self.peaks = get_peaks(self.blank, self.line)
         
         # Update the graph
@@ -111,14 +116,14 @@ class MyWindow(QMainWindow):
         vboxbuttons.addWidget(self.bdown)
 
         hbox = QHBoxLayout()
-        hbox.addSpacing(1500)
+        hbox.addSpacing(int(1500/3240*width))
         hbox.addLayout(vboxbuttons)
 
         vbox = QVBoxLayout()
         # vbox.addSpacing(1000)
-        vbox.addSpacing(420)
+        vbox.addSpacing(int(420/2160*height))
         vbox.addLayout(hbox)
-        vbox.addSpacing(420)
+        vbox.addSpacing(int(420/2160*height))
         vbox.addWidget(self.canvas)
         
         self.centralWidget = QWidget()
@@ -140,18 +145,18 @@ class MyWindow(QMainWindow):
         self.graph, self.graphx = None, None
 
     def plot(self):
-        array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
+        array = get_array('Photos/Photo_Fiber_Obj_20X.tif')
         processed = get_processed_array(array)
-        blank = get_contours_array(processed)
-        peaks = get_peaks(blank, self.line)
+        # blank = get_contours_array(processed)
+        peaks = get_peaks(processed, self.line)
 
         self.figure = Figure()
         self.canvas = FigureCanvasQTAgg(self.figure)
 
         # Maybe change to ax as input var for function?
         self.ax = self.figure.add_subplot(111)
-        self.graph = self.ax.plot(peaks, blank[self.line,0:640][peaks], "x", c="red")
-        self.graphx = self.ax.plot(range(0,640), blank[self.line,0:640])
+        self.graph = self.ax.plot(peaks, processed[self.line,:][peaks], "x", c="red")
+        self.graphx = self.ax.plot(range(0,processed.shape[1]), processed[self.line,:])
         self.ax.set_title('Profiling of grayscale along the line')
         self.ax.set_ylabel('grayscale intensity')
         self.ax.set_xlabel('pixel')
@@ -174,10 +179,11 @@ class MyWindow(QMainWindow):
             print('not an integer')
         else: 
             self.line = int(text)
+            
 
     def updateplot(self):
         value = self.line
-        blank = self.blank
+        processed = self.processed
         peaks = self.peaks
         try: 
             value = float(value)
@@ -191,14 +197,20 @@ class MyWindow(QMainWindow):
             line = self.graphx.pop(0)
             line.remove()
         
-        self.graph = self.ax.plot(peaks, blank[self.line,0:640][peaks], "x", c="red")
-        self.graphx = self.ax.plot(range(0,640), blank[self.line,0:640])
+        self.graph = self.ax.plot(peaks, processed[self.line,:][peaks], "x", c="red")
+        self.graphx = self.ax.plot(range(0,processed.shape[1]), processed[self.line,:])
         self.canvas.draw()
 
       
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+
+    # Standardize pixel positions using monitor resolution
+    screen_rect = app.desktop().screenGeometry()
+    width, height = screen_rect.width(), screen_rect.height()
+    print(width,height)
+
     win = MyWindow()
     win.showMaximized()
     

@@ -1,51 +1,77 @@
 import cv2 as cv
-from cv2 import THRESH_BINARY
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import numpy as np
 import scipy
 from scipy.signal import find_peaks
+from scipy.stats import linregress
 #import utlis
+
+from img_separator import *
 
 def get_array(file):
     return cv.imread(file)
 
-def get_processed_array(img):
-    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    ret, thresh = cv.threshold(gray,125,125, cv.THRESH_BINARY)
-    return thresh
+def get_canny_edge(img):
+    canny = cv.Canny(img, 10, 15)
+    return canny
+
+def get_adaptive_binary(img):
+    th = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY_INV,21,2)
+    erode = cv.erode(th, np.ones((5,5)), iterations=1)
+    return erode
+
+def get_binary_array(img):
+    segment = segment_identifier(img)
+    ### Average intensity of each segment
+    left_mean = np.mean(img[:,:int(segment[1])])
+    right_mean = np.mean(img[:,int(segment[2]):])
+
+    ret_left, thresh_left = cv.threshold(img, left_mean+10, 255, cv.THRESH_BINARY)
+    ret_right, thresh_right = cv.threshold(img, right_mean+20, 255, cv.THRESH_BINARY_INV)
+    return cv.bitwise_xor(thresh_left, thresh_right, mask = None)
 
 def get_contours_array(img):
     blank = np.zeros(img.shape[:2], dtype = 'uint8')
-    contours, hierarchies = cv.findContours(img, cv.RETR_TREE,cv.CHAIN_APPROX_SIMPLE)
+    contours, hierarchies = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
-    cv.drawContours(blank, contours, -1, (255,255,255), 1)
+    cv.drawContours(blank, contours, -1, (255,255,255), thickness=2)
     return blank
 
-def draw_profiling_line(gray,blank):
-    grayLine = gray.copy()
-    blankLine = blank.copy()
+def get_processed_array(img):
+    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    blur = cv.GaussianBlur(gray, (7,7), cv.BORDER_DEFAULT)
+    
+    ### Canny edge
+    # processed = get_canny_edge(blur)
+    
+    ### Adaptive threshold
+    processed = get_adaptive_binary(blur)
 
-    cv.line(grayLine, (0, 250), (640, 250), (255, 255, 255), thickness=2, lineType=cv.LINE_AA) # draw a line on a copy of original gray image 
-    cv.line(blankLine, (0, 250), (640, 250), (255, 255, 255), thickness=2, lineType=cv.LINE_AA) # draw a line on a copy of contour image
+    ### Binary + contour
+    # processed = get_contours_array(get_binary_array(blur))
+    return processed
 
-    cv.imshow('Mosfet Grayscale with Profiling line',grayLine)
-    cv.imshow('Contours Drawn with Profiling line', blankLine)
-    return grayLine, blankLine
+def draw_profiling_line(img, y):
+    imgLine = img.copy()
+    cv.line(imgLine, (0, y), (img.shape[0], y), (255, 255, 255), thickness=2, lineType=cv.LINE_AA);
+    
+    return imgLine
 
 def get_peaks(contoured, y):
-    peaks, properties = find_peaks(contoured[y,0:640], prominence=3) # find peaks along a horizontal line of 250th pixel
+    ### find peaks along a horizontal line y
+    peaks, properties = find_peaks(contoured[y,:], prominence=5) 
     return peaks
 
-def create_plot(blank, peaks, y):
+def create_plot(contoured, peaks, y):
     fig = plt.Figure(figsize=(6,5), dpi=100)
     ax = fig.add_subplot(111)
-    ax.plot(peaks, blank[y,0:640][peaks], "x", c="red")
-    ax.plot(range(0,640), blank[y,0:640])
+    ax.plot(peaks, contoured[y,:][peaks], "x", c="red")
+    ax.plot(range(0,contoured.shape[0]), contoured[y,:])
     ax.set_title('Profiling of grayscale along the line')
-    ax.set_ylabel('grayscale intensity')
-    ax.set_xlabel('pixel')
-    ax.set_ylim([-5,260])
+    ax.set_ylabel('Grayscale intensity')
+    ax.set_xlabel('Pixel')
+    ax.set_ylim([-5,260]) ### Grayscale from 0 to 255
 
     canvas = FigureCanvasAgg(fig)
     canvas.draw()
@@ -53,6 +79,44 @@ def create_plot(blank, peaks, y):
     plot = cv.cvtColor(np.asarray(buf),cv.COLOR_RGB2BGR)
     return plot
 
+def get_fiber_angle(img):
+    fiber = img_separator(img)[1]
+    gamma = 20
+    for i in range(256):
+    	lookUpTable[0,i] = np.clip(pow(i / 255.0, gamma) * 255.0, 0, 255)
+    processed = cv.LUT(fiber, lookUpTable)
+    
+    step = -10
+
+    x_data = []
+    y_data = []
+    for j in range(processed.shape[1],0,step):
+        if j < abs(step):
+            break
+        y = np.arange(0,processed.shape[0])
+        x = np.array(list(np.mean(processed[k,j+step:j]) for k in np.arange(0,processed.shape[0])))
+        peaks, _ = find_peaks(x, prominence=50)
+
+        x_data =[j+step/2]*len(peaks)
+        y_data = peaks
+    clustering = GaussianMixture(n_components=3)
+    X = np.array([[i,j] for i,j in zip(x_data, y_data)])
+    labels = clustering.fit_predict(X)
+    min_std = 1.0
+    r = 0.0
+    for j in set(labels):
+        xy = X[labels == j]
+        if len(xy) > 5:
+            slope, intercept, r_value, p_value, std_err = linregress(xy[:,0], xy[:,1])
+            print(j, slope, intercept, r_value, p_value, std_err) 
+            if (std_err <= min_std) & (r_value > 0):
+                min_std = std_err
+                r = r_value
+                deg = np.arctan(slope)/np.pi*180
+    try:                
+        return np.format_float_positional(90-deg, precision=2)
+    except:
+        return "cannot determine the angle"
 
 if __name__ == "__main__":
     ### Original image
