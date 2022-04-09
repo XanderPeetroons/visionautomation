@@ -10,7 +10,6 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
 
-
 class MyWindow(QMainWindow):
     def __init__(self):
         super(MyWindow, self).__init__()
@@ -56,18 +55,27 @@ class MyWindow(QMainWindow):
 
 
 
-        ### PROCESSED IMAGE
+        ### PROCESSED IMAGE gets drawn by painter 
 
         img = get_array('Photos/Photo_Fiber_Obj_20X.tif')
 	### Processed array now will include contour (to compatible with adaptive threshold, which not require contour)
         processed_array = get_processed_array(img) 
-        cv2.imwrite('Photos/Processed_10X.jpg', processed_array)
+        # cv2.imwrite('Photos/Processed_10X.jpg', processed_array)
 
-        pixmapprocessed = QPixmap('Photos/Processed_10X.jpg')
-        self.labelprocessed = QLabel(self)
-        pixmapprocessed = pixmapprocessed.scaled(int(700/3240*width),int(700/2160*height),Qt.KeepAspectRatio)
-        self.labelprocessed.setPixmap(pixmapprocessed)
-        self.labelprocessed.setGeometry(int(800/3240*width),int(200/2160*height),int(700/3240*width),int(700/2160*height))
+        """ Read from array """
+        # img = cv2.imread('2.jpg')
+        # height, width, bytesPerComponent = img.shape
+        # bytesPerLine = 3 * width
+        # cv2.cvtColor(img, cv2.COLOR_BGR2RGB, img)
+        # QImg = QImage(img.data, width, height, bytesPerLine,QImage.Format_RGB888)
+        # pixmap = QPixmap.fromImage(QImg)
+
+        # pixmapprocessed = QPixmap('Photos/Processed_10X.jpg')
+        # self.labelprocessed = QLabel(self)
+        # pixmapprocessed = pixmapprocessed.scaled(int(700/3240*width),int(700/2160*height),Qt.KeepAspectRatio)
+        # # self.labelprocessed.setPixmap(pixmapprocessed)
+        # self.labelprocessed.setGeometry(int(800/3240*width),int(200/2160*height),int(700/3240*width),int(700/2160*height))
+
 
 
         """
@@ -104,6 +112,12 @@ class MyWindow(QMainWindow):
         self.blank = get_contours_array(self.processed)
         self.peaks = get_peaks(self.blank, self.line)
         
+        # Max value for self.line 
+        self.maxyvalue = self.processed.shape[0]
+        
+        # Define First rectangle for green bar
+        self.greenbar = QRect(int(780/3240*width),int((200+(self.line/self.maxyvalue*700))/2160*height-2),int(740/3240*width),5)
+
         # Update the graph
         self.updateplot()
 
@@ -129,6 +143,40 @@ class MyWindow(QMainWindow):
         self.centralWidget = QWidget()
         self.centralWidget.setLayout(vbox)
         self.setCentralWidget(self.centralWidget)
+
+    """
+    LINE ON IMAGE
+    """
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        self.pixmapprocessed = QPixmap('Photos/Processed_10X.jpg')
+        self.labelprocessed = QLabel(self)
+        self.pixmapprocessed = self.pixmapprocessed.scaled(int(700/3240*width),int(700/2160*height),Qt.KeepAspectRatio)
+        # self.labelprocessed.setPixmap(pixmapprocessed)
+        painter.drawPixmap(int(800/3240*width),int(200/2160*height),int(700/3240*width),int(700/2160*height), self.pixmapprocessed)
+        painter.setPen(QPen(Qt.green, 5, Qt.SolidLine))
+        painter.drawLine(int(780/3240*width),int((200+(self.line/self.maxyvalue*700))/2160*height),int(1520/3240*width),int((200+(self.line/self.maxyvalue*700))/2160*height))
+
+    def mousePressEvent(self,event):
+        if event.button() == Qt.LeftButton:
+            self.dragging = True
+            self.lastPoint = event.pos()
+            print(self.lastPoint.y())
+            print(self.greenbar.contains(self.lastPoint))
+    
+    def mouseMoveEvent(self, event):
+        if self.dragging and self.greenbar.contains(self.lastPoint):
+            print('worked')
+            self.line = int( ((event.pos().y()/height*2160)-200)/700*self.maxyvalue )
+            self.update()
+            self.greenbar = QRect(int(780/3240*width),int((200+(self.line/self.maxyvalue*700))/2160*height-2),int(740/3240*width),5)
+            self.lastPoint = event.pos()
+            self.updateplot()
+
+    def mouseReleaseEvent(self, event):
+        if event.button == Qt.LeftButton:
+            print("OK")
+            self.dragging = False
 
 
 
@@ -167,11 +215,13 @@ class MyWindow(QMainWindow):
         """ One pixel up """
         self.line += 1
         self.updateplot()
+        self.update() # painter update
 
     def clickdown(self):
         """ One pixel down """
         self.line -= 1
         self.updateplot()
+        self.update() # painter update
 
     def textchanged(self, text):
         """ Intersection to the input pixel """
@@ -179,6 +229,8 @@ class MyWindow(QMainWindow):
             print('not an integer')
         else: 
             self.line = int(text)
+            self.updateplot()
+            self.update() # painter update
             
 
     def updateplot(self):
@@ -191,7 +243,7 @@ class MyWindow(QMainWindow):
             value = 250
 
         # Renew graph
-        if self.graph:
+        if self.graphx:
             line = self.graph.pop(0)
             line.remove()
             line = self.graphx.pop(0)
