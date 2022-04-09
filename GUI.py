@@ -161,12 +161,9 @@ class MyWindow(QMainWindow):
         if event.button() == Qt.LeftButton:
             self.dragging = True
             self.lastPoint = event.pos()
-            print(self.lastPoint.y())
-            print(self.greenbar.contains(self.lastPoint))
     
     def mouseMoveEvent(self, event):
         if self.dragging and self.greenbar.contains(self.lastPoint):
-            print('worked')
             self.line = int( ((event.pos().y()/height*2160)-200)/700*self.maxyvalue )
             self.update()
             self.greenbar = QRect(int(780/3240*width),int((200+(self.line/self.maxyvalue*700))/2160*height-2),int(740/3240*width),5)
@@ -175,7 +172,6 @@ class MyWindow(QMainWindow):
 
     def mouseReleaseEvent(self, event):
         if event.button == Qt.LeftButton:
-            print("OK")
             self.dragging = False
 
 
