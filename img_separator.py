@@ -6,8 +6,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 from scipy.signal import find_peaks
+from scipy.stats import linregress
 import math
 import pwlf
+from sklearn.mixture import GaussianMixture 
 
 ## Some definitions:
 ## Kernel: matrix that defines size of convolution, weights applied and an anchor point
@@ -28,6 +30,63 @@ def img_separator(img):
     img_left = img[:, :mid+50] ### margin of 50 pixel
     img_right = img[:, mid-50:]
     return img_left, img_right
+
+def get_angle(img, peak_position = 'last', direction = 'horizontal', step = 20):
+    ### Peak position (from left to right or top to bottom): first, last or all
+    ### Direction: horizontal (for chip) or vertical (for fiber)
+    ### Step: sampling the pixel (get 1 peak for every "step" pixel)
+    
+    coord_data = []
+    peak_data = []
+    
+    if direction == 'horizontal':
+        s = 0
+    elif direction == 'vertical':
+        s = 1
+    for j in range(0, img.shape[s], step):
+        if s == 0:
+            p = img[j,:]
+        elif s == 1:
+            p = img[:,j]
+        
+        peaks, _ = find_peaks(p, prominence=50)
+        if len(peaks) == 0:
+            continue
+        
+        first_peak = peaks[0]
+        last_peak = peaks[len(peaks)-1]
+
+        if (peak_position == 'last'):
+            coord_data.append([j])
+            peak_data.append([last_peak])
+        elif (peak_position == 'first'):
+            coord_data.append([j])
+            peak_data.append([first_peak])
+        elif (peak_position == 'all'):
+            coord_data.append([j]*len(peaks))
+            peak_data.append(peaks)
+    data = [[item for sublist in coord_data for item in sublist],
+            [item for sublist in peak_data for item in sublist]]
+
+    clustering = GaussianMixture(n_components=3)
+    X = np.array([[i,j] for i,j in zip(data[0], data[1])])
+    labels = clustering.fit_predict(X)
+    min_std = 1.0
+    r = 0.0
+
+    for j in set(labels):
+        xy = X[labels == j]
+        if len(xy) > 5:
+            slope, intercept, r_value, p_value, std_err = linregress(xy[:,0], xy[:,1])
+            # print(j, slope, intercept, r_value, p_value, std_err) 
+            if (std_err <= min_std) & (r_value > 0):
+                min_std = std_err
+                r = r_value
+                deg = np.arctan(slope)/np.pi*180
+    try:                
+        return "Angle " + np.format_float_positional(90-deg, precision=2), data
+    except:
+        return "Cannot determine the angle", data
 
 
 ### From discussion on Friday

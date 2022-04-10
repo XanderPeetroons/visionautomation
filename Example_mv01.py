@@ -40,7 +40,7 @@ def get_contours_array(img):
 
 def get_processed_array(img):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    blur = cv.GaussianBlur(gray, (7,7), cv.BORDER_DEFAULT)
+    blur = cv.GaussianBlur(gray, (0,0), 2)
     
     ### Canny edge
     # processed = get_canny_edge(blur)
@@ -59,7 +59,7 @@ def draw_profiling_line(img, y):
     return imgLine
 
 def get_peaks(contoured, y):
-    ### find peaks along a horizontal line y
+    ### Find peaks along a horizontal line y
     peaks, properties = find_peaks(contoured[y,:], prominence=5) 
     return peaks
 
@@ -79,44 +79,6 @@ def create_plot(contoured, peaks, y):
     plot = cv.cvtColor(np.asarray(buf),cv.COLOR_RGB2BGR)
     return plot
 
-def get_fiber_angle(img):
-    fiber = img_separator(img)[1]
-    gamma = 20
-    for i in range(256):
-    	lookUpTable[0,i] = np.clip(pow(i / 255.0, gamma) * 255.0, 0, 255)
-    processed = cv.LUT(fiber, lookUpTable)
-    
-    step = -10
-
-    x_data = []
-    y_data = []
-    for j in range(processed.shape[1],0,step):
-        if j < abs(step):
-            break
-        y = np.arange(0,processed.shape[0])
-        x = np.array(list(np.mean(processed[k,j+step:j]) for k in np.arange(0,processed.shape[0])))
-        peaks, _ = find_peaks(x, prominence=50)
-
-        x_data =[j+step/2]*len(peaks)
-        y_data = peaks
-    clustering = GaussianMixture(n_components=3)
-    X = np.array([[i,j] for i,j in zip(x_data, y_data)])
-    labels = clustering.fit_predict(X)
-    min_std = 1.0
-    r = 0.0
-    for j in set(labels):
-        xy = X[labels == j]
-        if len(xy) > 5:
-            slope, intercept, r_value, p_value, std_err = linregress(xy[:,0], xy[:,1])
-            print(j, slope, intercept, r_value, p_value, std_err) 
-            if (std_err <= min_std) & (r_value > 0):
-                min_std = std_err
-                r = r_value
-                deg = np.arctan(slope)/np.pi*180
-    try:                
-        return np.format_float_positional(90-deg, precision=2)
-    except:
-        return "cannot determine the angle"
 
 if __name__ == "__main__":
     ### Original image
@@ -130,7 +92,7 @@ if __name__ == "__main__":
 
 
     ### Blur
-    #blur = cv.GaussianBlur(img, (7,7), cv.BORDER_DEFAULT)
+    #blur = cv.GaussianBlur(img, (0,0), cv.BORDER_DEFAULT)
     #cv.imshow('Blur',blur)
 
 
@@ -172,24 +134,21 @@ if __name__ == "__main__":
 
 
     ### Profiling on the line
-    grayLine = gray.copy()
-    blankLine = blank.copy()
-
-    cv.line(grayLine, (0, 250), (640, 250), (255, 255, 255), thickness=2, lineType=cv.LINE_AA) # draw a line on a copy of original gray image 
-    cv.line(blankLine, (0, 250), (640, 250), (255, 255, 255), thickness=2, lineType=cv.LINE_AA) # draw a line on a copy of contour image
+    grayLine = draw_profiling_line(gray, y=250) # draw a line on a copy of original gray image 
+    blankLine = draw_profiling_line(blank, y=250) # draw a line on a copy of contour image
 
     cv.imshow('Mosfet Grayscale with Profiling line',grayLine)
     cv.imshow('Contours Drawn with Profiling line', blankLine)
 
-    peaks, properties = find_peaks(blank[250,0:640], prominence=3) # find peaks along a horizontal line of 250th pixel
+    peaks, properties = find_peaks(blank[250,0:640], prominence=3) # find peaks along a horizontal line of pixel 250
 
     fig = plt.Figure(figsize=(6,5), dpi=100)
     ax = fig.add_subplot(111)
     ax.plot(peaks, blank[250,0:640][peaks], "x", c="red")
     ax.plot(range(0,640), blank[250,0:640])
     ax.set_title('Profiling of grayscale along the line')
-    ax.set_ylabel('grayscale intensity')
-    ax.set_xlabel('pixel')
+    ax.set_ylabel('Grayscale intensity')
+    ax.set_xlabel('Pixel')
     ax.set_ylim([-5,260])
 
     canvas = FigureCanvasAgg(fig)
@@ -197,4 +156,5 @@ if __name__ == "__main__":
     buf = canvas.buffer_rgba()
     plot = cv.cvtColor(np.asarray(buf),cv.COLOR_RGB2BGR)
     cv.imshow('Profiling', plot)
+
     cv.waitKey(10000)
