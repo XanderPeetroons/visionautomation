@@ -78,7 +78,7 @@ if __name__ == "__main__":
     if background_profiler(fiber) >= 150:
         fiber = contrast_enhancer(fiber)
     
-    binary_fiber = adapt_thresh_otsu (fiber)
+    binary_fiber = adapt_thresh_otsu(fiber)
     contour_fiber = get_contours_array(binary_fiber)
     text, data = get_angle(contrast_enhancer(fiber), 'all', 'vertical', 10)
     cv.imshow('Binary', binary_fiber)

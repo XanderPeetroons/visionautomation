@@ -84,13 +84,13 @@ class MyWindow(QMainWindow):
         # BUTTONS
         self.bup = QPushButton(self)
         self.bup.setText("+")
-        self.bup.clicked.connect(self.clickup)
+        self.bup.clicked.connect(self.clickdown)
         self.bup.setMaximumSize(int(120/3240*width),int(40/2160*height))
         # self.bup.move(1600,430)
 
         self.bdown = QPushButton(self)
         self.bdown.setText("-")
-        self.bdown.clicked.connect(self.clickdown)
+        self.bdown.clicked.connect(self.clickup)
         self.bdown.setMaximumSize(int(120/3240*width),int(40/2160*height))
         # self.bdown.move(1600,550)
 
@@ -130,7 +130,7 @@ class MyWindow(QMainWindow):
         vboxbuttons.addWidget(self.bdown)
 
         hbox = QHBoxLayout()
-        hbox.addSpacing(int(1500/3240*width))
+        hbox.addSpacing(int(600/3240*width))
         hbox.addLayout(vboxbuttons)
 
         vbox = QVBoxLayout()
