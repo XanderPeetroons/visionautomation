@@ -83,8 +83,12 @@ def get_angle(img, peak_position = 'last', direction = 'horizontal', step = 20):
                 min_std = std_err
                 r = r_value
                 deg = np.arctan(slope)/np.pi*180
+
+                corner = xy[0,:]
+
+        
     try:                
-        return "Angle " + np.format_float_positional(90-deg, precision=2), data
+        return "Angle " + np.format_float_positional(90-deg, precision=2), data, corner
     except:
         return "Cannot determine the angle", data
 

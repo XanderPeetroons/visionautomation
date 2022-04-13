@@ -42,6 +42,29 @@ def get_text(img, text):
     cv.putText(imageText, text, (0, img.shape[0]), fontFace, fontScale, fontColor, fontThickness, cv.LINE_AA)
     return imageText
 
+def get_vertical_edge(img):
+
+    angle, data, corner_top = get_angle(img, 'first','vertical')
+    angle, data, corner_bottom = get_angle(img, 'last','vertical')
+
+
+    peak_x = []
+    peak_y = []
+
+    for j in range(0, img.shape[0], 5):
+        p = img[j,:]
+
+        peaks, _ = find_peaks(p, prominence=50)
+        if len(peaks) == 0:
+            continue
+        first_peak = peaks[0]
+        
+        peak_y.append(first_peak)
+        peak_x.append(j)
+
+        X = np.array([[i,j] for i,j in zip(data[0], data[1])])
+
+
 if __name__ == "__main__":
 
     def get_array(file):
@@ -80,9 +103,10 @@ if __name__ == "__main__":
     
     binary_fiber = adapt_thresh_otsu(fiber)
     contour_fiber = get_contours_array(binary_fiber)
-    text, data = get_angle(contrast_enhancer(fiber), 'all', 'vertical', 10)
+    text, data, corner = get_angle(contrast_enhancer(fiber), 'all', 'vertical', 10)
     cv.imshow('Binary', binary_fiber)
     cv.imshow('Contour', get_text(contour_fiber, text))
     
+    edge = get_vertical_edge(contour_fiber)
 
     cv.waitKey(0)

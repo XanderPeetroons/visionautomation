@@ -47,7 +47,7 @@ class MyWindow(QMainWindow):
         IMAGES
         """
         # MOSFET IMAGE
-        pixmapimage = QPixmap('Photos/Photo_Fiber_Obj_20X.tif')
+        pixmapimage = QPixmap('Photos/Photo_Fiber_Obj_10X.tif')
         pixmapimage = pixmapimage.scaled(int(700/3240*width), int(700/2160*height), Qt.KeepAspectRatio)
         self.labelimage = QLabel(self)
         self.labelimage.setPixmap(pixmapimage)
@@ -57,7 +57,7 @@ class MyWindow(QMainWindow):
 
         ### PROCESSED IMAGE gets drawn by painter 
 
-        img = get_array('Photos/Photo_Fiber_Obj_20X.tif')
+        img = get_array('Photos/Photo_Fiber_Obj_10X.tif')
 	### Processed array now will include contour (to compatible with adaptive threshold, which not require contour)
         processed_array = get_processed_array(img) 
         # cv2.imwrite('Photos/Processed_10X.jpg', processed_array)
@@ -107,7 +107,7 @@ class MyWindow(QMainWindow):
         self.insert_ax()
 
         # Get the picture information and store
-        array = get_array('Photos/Photo_Fiber_Obj_20X.tif')
+        array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
         self.processed = get_processed_array(array)
         self.blank = get_contours_array(self.processed)
         self.peaks = get_peaks(self.blank, self.line)
@@ -189,7 +189,7 @@ class MyWindow(QMainWindow):
         self.graph, self.graphx = None, None
 
     def plot(self):
-        array = get_array('Photos/Photo_Fiber_Obj_20X.tif')
+        array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
         processed = get_processed_array(array)
         # blank = get_contours_array(processed)
         peaks = get_peaks(processed, self.line)
