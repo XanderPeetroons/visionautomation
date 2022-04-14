@@ -10,8 +10,8 @@ from scipy.stats import linregress
 import math
 import pwlf
 
-from img_separator import *
-from fiber_img_processor import *
+#from img_separator import *
+from img_processing import *
 
 if __name__ == "__main__":
 
@@ -49,21 +49,20 @@ if __name__ == "__main__":
     img_left, img_right = img_separator (blur)
     left_img = rescale(img_left, scale=0.48)
 
-    ### Printing processed image
+    ### Processing image for edges and angle calculation
 
     cv.imshow('Left',left_img)
     chip_image = canny_edge(left_img)
-    #cv.imshow('Canny',chip_image)
 
-    ## Calculating angle
     binary_chip = adapt_thresh_otsu(left_img)
     cv.imshow('Binary',binary_chip)
 
     if background_profiler(binary_chip) >= 150:
-        fiber = contrast_enhancer(binary_chip)
+        binary_chip = contrast_enhancer(binary_chip)
         print('Contraste enhanced...')
 
-        
+    ## Calculating angle
+
     text, data = get_angle(binary_chip, 'last', 'horizontal', 10)
     cv.imshow('Canny', get_text(chip_image, text))
 

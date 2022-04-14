@@ -7,15 +7,19 @@ from scipy.signal import find_peaks
 import math
 import pwlf
 
-from img_separator import *
+#from img_separator import *
+from img_processing import *
 
+'''
 def contrast_enhancer(img, gamma = 14):
-    ### When gamma<1, the original dark regions will be brighter and he. histogram will be shifted to the right
+    ### When gamma<1 (contrast factor), the original dark regions will be brighter and the histogram will be shifted to the right
     ### Whereas it will be the opposite with gamma>1.
-    lookUpTable = np.empty((1,256), np.uint8)
+    ### Image argument in grayscale
+
+    lookUpTable = np.empty((1,256), np.uint8) # new array with a given shape and type
     for i in range(256):
-    	lookUpTable[0,i] = np.clip(pow(i / 255.0, gamma) * 255.0, 0, 255)
-    enhanced = cv.LUT(fiber, lookUpTable)
+    	lookUpTable[0,i] = np.clip(pow(i / 255.0, gamma) * 255.0, 0, 255) #array with max values of 0 & 255
+    enhanced = cv.LUT(img, lookUpTable) 
     return enhanced
 
 def background_profiler(img):
@@ -41,7 +45,7 @@ def get_text(img, text):
 
     cv.putText(imageText, text, (0, img.shape[0]), fontFace, fontScale, fontColor, fontThickness, cv.LINE_AA)
     return imageText
-
+'''
 if __name__ == "__main__":
 
     def get_array(file):
