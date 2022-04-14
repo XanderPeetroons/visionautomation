@@ -57,33 +57,33 @@ def background_profiler(img):
     background= np.concatenate((img[:first_peak-50,:].ravel(),img[last_peak+50:,:].ravel()))
     return np.median(background)
 
-def adapt_thresh_bin (img):
+def adapt_thresh_bin (img,x,y):
     ret1, th1 = cv.threshold(img, 127, 255, cv.THRESH_BINARY)
-    th2 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY,11,2)
-    th3 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY,11,2)
+    th2 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY,x,y) #number of pixels
+    th3 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY,x,y)
 
     return th1, th2, th3
 
-def adapt_thresh_inv_bin (img):
+def adapt_thresh_inv_bin (img,x,y):
     ret1, th1 = cv.threshold(img, 127, 255, cv.THRESH_BINARY_INV)
-    th2 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY_INV,11,2)
-    th3 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV,11,2)
+    th2 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY_INV,x,y)
+    th3 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV,x,y)
 
     return th1, th2, th3
 
 def adapt_thresh_trunc (img):
     ret1, th1 = cv.threshold(img, 127, 255, cv.THRESH_TRUNC)
-    th2 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_TRUNC,11,2)
-    th3 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_TRUNC,11,2)
+    #th2 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_TRUNC,11,2)
+    #th3 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_TRUNC,11,2)
 
-    return th1, th2, th3
+    return th1#, th2, th3
 
 def adapt_thresh_tozero (img):
     ret1, th1 = cv.threshold(img, 127, 255, cv.THRESH_TOZERO)
-    th2 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_TOZERO,11,2)
-    th3 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_TOZERO,11,2)
+    #th2 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_TOZERO,11,2)
+    #th3 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_TOZERO,11,2)
 
-    return th1, th2, th3
+    return th1#, th2, th3
 
 def adapt_thresh_inv_tozero(img):
     ret1, th1 = cv.threshold(img, 127, 255, cv.THRESH_TOZERO_INV)
