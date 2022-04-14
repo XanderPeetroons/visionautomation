@@ -9,6 +9,7 @@ from scipy.signal import find_peaks
 from scipy.stats import linregress
 import math
 import pwlf
+from PIL import Image
 
 #from img_separator import *
 from img_processing import *
@@ -39,31 +40,55 @@ if __name__ == "__main__":
         contours, hierarchies = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         cv.drawContours(blank, contours, -1, (255,255,255), thickness=2)
         return blank
-            
+  
     ### Segment the image
 
-    array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
+    #array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
+    array = get_array('Photos/Photo_Fiber_Obj_20X.tif')
+    #array = get_array('Photos/Photo_Fiber_Obj_50X.tif')
+    cv.imshow('Original image', rescale(array, scale = 0.48))
     gray = cv.cvtColor(array, cv.COLOR_BGR2GRAY)
     blur = cv.GaussianBlur(gray,(5,5),cv.BORDER_DEFAULT)  ##box
 
     img_left, img_right = img_separator (blur)
     left_img = rescale(img_left, scale=0.48)
+    right_img = rescale(img_right, scale=0.48)
 
     ### Processing image for edges and angle calculation
 
-    cv.imshow('Left',left_img)
+    #cv.imshow('Left',left_img)
     chip_image = canny_edge(left_img)
 
     binary_chip = adapt_thresh_otsu(left_img)
-    cv.imshow('Binary',binary_chip)
+    #cv.imshow('Binary',binary_chip)
 
     if background_profiler(binary_chip) >= 150:
         binary_chip = contrast_enhancer(binary_chip)
         print('Contraste enhanced...')
 
-    ## Calculating angle
+    ### Calculating angle
 
-    text, data = get_angle(binary_chip, 'last', 'horizontal', 10)
-    cv.imshow('Canny', get_text(chip_image, text))
+    textc, datac = get_angle(binary_chip, 'last', 'horizontal', 10)
+    cv.imshow('Canny_chip', get_text(chip_image, textc))
+    
+    
+
+    ### Merging processed images
+    '''
+    #new_left = chip_image[:, :(chip_image.shape[0]-50)]
+    #cv.imshow('-50pix', new_left)
+    #binary_fiber = adapt_thresh_otsu(right_img)
+
+    if background_profiler(binary_chip) >= 150:
+        binary_fiber = contrast_enhancer(binary_fiber)
+        print('Contraste enhanced...')
+    
+    contour_fiber = get_contours_array(binary_fiber)
+    textf, dataf = get_angle(contrast_enhancer(right_img), 'all', 'vertical', 10)
+    #cv.imshow('Contour_fiber', get_text(contour_fiber, textf))
+
+    post_process_img = img_join(chip_image,contour_fiber)  ### the 50 pixel margin is added
+    cv.imshow('Joined image',post_process_img)
+    '''
 
     cv.waitKey(0)

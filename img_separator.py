@@ -90,7 +90,7 @@ def get_angle(img, peak_position = 'last', direction = 'horizontal', step = 20):
 
 
 ### From discussion on Friday
-if __name__ == "__main__":
+if __name__ == "__main__":  ## remove this "if" to be able to import function
 
     def get_array(file):
         return cv.imread(file)
@@ -162,36 +162,3 @@ if __name__ == "__main__":
         blank = np.zeros(img.shape[:2], dtype = 'uint8')
         cv.drawContours(blank, contours,-1, (255,255,255), thickness=1)
         return blank
-
-    ### Segment the image
-
-    array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
-    gray = cv.cvtColor(array, cv.COLOR_BGR2GRAY)
-    blur = cv.GaussianBlur(gray,(5,5),cv.BORDER_DEFAULT)  ##box
-
-    img_left, img_right = img_separator (blur)
-    left_img = rescale(img_left, scale=0.48)
-
-    ### Printing alternatives
-
-    cv.imshow('Left',left_img)
-    cv.imshow('Canny',canny_edge(left_img))
-    #sobelx, sobely, sobelxy = sobel_edge(left_img)
-    #cv.imshow('SobelX',sobelx) 
-    #cv.imshow('SobelY',sobely)
-    #cv.imshow('SobelXY',sobelxy)
-    #contoursonly = get_contours(canny_edge(left_img))
-    #cv.imshow('Dibujando los contornos',contoursonly)
-    #th1, th2, th3 = adapt_thresh_bin (left_img)
-    #thv1, thv2, thv3 = adapt_thresh_inv_bin (left_img)
-    #thk1, thk2, thk3 = adapt_thresh_trunc (left_img)
-    #th01, th02, th03 = adapt_thresh_tozero (left_img)
-    #th0v1, th0v2, th0v3 = adapt_thresh_inv_tozero (left_img)
-    #cv.imshow('Binary', th1)
-    #cv.imshow('Adapt Mean', th2)
-    #cv.imshow('Adapt Gaussian', th3)
-
-    tho = adapt_thresh_otsu (left_img)
-    cv.imshow('Binary', tho)
-
-    cv.waitKey(0)

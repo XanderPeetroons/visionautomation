@@ -1,4 +1,5 @@
 ### Import library
+from tkinter import Image
 import cv2 as cv
 from cv2 import IMWRITE_JPEG2000_COMPRESSION_X1000
 from cv2 import THRESH_BINARY
@@ -10,10 +11,11 @@ from scipy.stats import linregress
 import math
 import pwlf
 from sklearn.mixture import GaussianMixture 
+from PIL import Image
 
 ### Basic functions
 
-def get_array(file):
+def get_array(file):    #I don't know why this is not imported
     return cv.imread(file)
 
 def rescale(img, scale = 0.75):
@@ -38,7 +40,7 @@ def contrast_enhancer(img, gamma = 14):
     lookUpTable = np.empty((1,256), np.uint8) # new array with a given shape and type
     for i in range(256):
     	lookUpTable[0,i] = np.clip(pow(i / 255.0, gamma) * 255.0, 0, 255) #array with max values of 0 & 255
-    enhanced = cv.LUT(img, lookUpTable) 
+    enhanced = cv.LUT(img, lookUpTable) # new color map
     return enhanced
 
 def background_profiler(img):
@@ -132,6 +134,10 @@ def img_separator(img):
     img_left = img[:, :mid+50] ### margin of 50 pixel
     img_right = img[:, mid-50:]
     return img_left, img_right
+
+def img_join(img1, img2):
+    new_image = np.concatenate((img1, img2), axis = 1)
+    return new_image
 
 def get_text(img, text):
     imageText = img.copy()
