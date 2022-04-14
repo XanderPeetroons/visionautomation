@@ -9,37 +9,62 @@ from scipy.signal import find_peaks
 from scipy.stats import linregress
 import math
 import pwlf
+
 from img_separator import *
+from fiber_img_processor import *
 
-### Segment the image
+if __name__ == "__main__":
 
-array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
-gray = cv.cvtColor(array, cv.COLOR_BGR2GRAY)
-blur = cv.GaussianBlur(gray,(5,5),cv.BORDER_DEFAULT)  ##box
+    def get_array(file):
+        return cv.imread(file)
 
-img_left, img_right = img_separator (blur)
-left_img = rescale(img_left, scale=0.48)
+    def rescale(img, scale = 0.75):
+        width = int (img.shape[1]*scale)
+        height = int (img.shape[0]*scale)
 
-### Printing alternatives
+        dimensions = (width,height)
 
-cv.imshow('Left',left_img)
-cv.imshow('Canny',canny_edge(left_img))
-#sobelx, sobely, sobelxy = sobel_edge(left_img)
-#cv.imshow('SobelX',sobelx) 
-#cv.imshow('SobelY',sobely)
-#cv.imshow('SobelXY',sobelxy)
-#contoursonly = get_contours(canny_edge(left_img))
-#cv.imshow('Dibujando los contornos',contoursonly)
-#th1, th2, th3 = adapt_thresh_bin (left_img)
-#thv1, thv2, thv3 = adapt_thresh_inv_bin (left_img)
-#thk1, thk2, thk3 = adapt_thresh_trunc (left_img)
-#th01, th02, th03 = adapt_thresh_tozero (left_img)
-#th0v1, th0v2, th0v3 = adapt_thresh_inv_tozero (left_img)
-#cv.imshow('Binary', th1)
-#cv.imshow('Adapt Mean', th2)
-#cv.imshow('Adapt Gaussian', th3)
+        return cv.resize(img, dimensions, interpolation=cv.INTER_AREA)
 
-tho = adapt_thresh_otsu (left_img)
-cv.imshow('Binary', tho)
+    def canny_edge (img):
+        edges = cv.Canny(img,10,50) #Arguments:  1) input image, 2) minVal, 3) maxVal, 4) aperture size (default = 3), 5) L2gradient
+        return edges
 
-cv.waitKey(0)
+    def adapt_thresh_otsu(img):
+        ret1, th1 = cv.threshold(img, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+        return th1
+
+    def get_contours_array(img):
+        blank = np.zeros(img.shape, dtype = 'uint8')
+        contours, hierarchies = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        cv.drawContours(blank, contours, -1, (255,255,255), thickness=2)
+        return blank
+            
+    ### Segment the image
+
+    array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
+    gray = cv.cvtColor(array, cv.COLOR_BGR2GRAY)
+    blur = cv.GaussianBlur(gray,(5,5),cv.BORDER_DEFAULT)  ##box
+
+    img_left, img_right = img_separator (blur)
+    left_img = rescale(img_left, scale=0.48)
+
+    ### Printing processed image
+
+    cv.imshow('Left',left_img)
+    chip_image = canny_edge(left_img)
+    #cv.imshow('Canny',chip_image)
+
+    ## Calculating angle
+    binary_chip = adapt_thresh_otsu(left_img)
+    cv.imshow('Binary',binary_chip)
+
+    if background_profiler(binary_chip) >= 150:
+        fiber = contrast_enhancer(binary_chip)
+        print('Contraste enhanced...')
+
+        
+    text, data = get_angle(binary_chip, 'last', 'horizontal', 10)
+    cv.imshow('Canny', get_text(chip_image, text))
+
+    cv.waitKey(0)
