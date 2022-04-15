@@ -44,9 +44,7 @@ def get_text(img, text):
 
 def get_vertical_edge(img):
 
-    angle, data, corner_top = get_angle(img, 'first','vertical')
-    angle, data, corner_bottom = get_angle(img, 'last','vertical')
-
+    angle, _, corners = get_angle(img, 'all', 'vertical', 10)
 
     peak_x = []
     peak_y = []
@@ -57,13 +55,26 @@ def get_vertical_edge(img):
         peaks, _ = find_peaks(p, prominence=50)
         if len(peaks) == 0:
             continue
-        first_peak = peaks[0]
-        
-        peak_y.append(first_peak)
-        peak_x.append(j)
+        # first_peak = peaks[0]
+        peak_y.append(peaks)
+        peak_x.append([j]*len(peaks))
+    
 
-        X = np.array([[i,j] for i,j in zip(data[0], data[1])])
 
+    data = [[item for sublist in peak_x for item in sublist ],
+        [item for sublist in peak_y for item in sublist ]]
+
+    clustering = GaussianMixture(n_components=3)
+    X = np.array([[i,j] for i,j in zip(data[0], data[1])])
+    labels = clustering.fit_predict(X)
+    for j in set(labels):
+        xy = X[labels == j]
+        if len(xy) > 5:
+            slope, intercept, r_value, p_value, std_err = linregress(xy[:,0], xy[:,1])
+            plt.plot([0,1000],[intercept,intercept+1000*slope])
+            plt.xlim(0,2040)
+            plt.ylim(0,2040)
+            plt.show()
 
 if __name__ == "__main__":
 
@@ -91,7 +102,7 @@ if __name__ == "__main__":
     
     ### Segment the image
     
-    array = get_array('Photos/Photo_Fiber_Obj_50X.tif')
+    array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
     gray = cv.cvtColor(array, cv.COLOR_BGR2GRAY)
     blur = cv.GaussianBlur(gray,(0,0),2)  ##box
 
@@ -103,9 +114,9 @@ if __name__ == "__main__":
     
     binary_fiber = adapt_thresh_otsu(fiber)
     contour_fiber = get_contours_array(binary_fiber)
-    text, data, corner = get_angle(contrast_enhancer(fiber), 'all', 'vertical', 10)
+    # text, data, corner = get_angle(contrast_enhancer(fiber), 'all', 'vertical', 10)
     cv.imshow('Binary', binary_fiber)
-    cv.imshow('Contour', get_text(contour_fiber, text))
+    # cv.imshow('Contour', get_text(contour_fiber, text))
     
     edge = get_vertical_edge(contour_fiber)
 

@@ -60,7 +60,7 @@ class MyWindow(QMainWindow):
         img = get_array('Photos/Photo_Fiber_Obj_10X.tif')
 	### Processed array now will include contour (to compatible with adaptive threshold, which not require contour)
         processed_array = get_processed_array(img) 
-        # cv2.imwrite('Photos/Processed_10X.jpg', processed_array)
+        # cv2.imwrite('Photos/Processed_50X.jpg', processed_array)
 
         """ Read from array """
         # img = cv2.imread('2.jpg')

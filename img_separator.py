@@ -67,6 +67,10 @@ def get_angle(img, peak_position = 'last', direction = 'horizontal', step = 20):
             peak_data.append(peaks)
     data = [[item for sublist in coord_data for item in sublist],
             [item for sublist in peak_data for item in sublist]]
+    # plt.plot(data[0],data[1],'.')
+    # plt.xlim(0,2040)
+    # plt.ylim(0,2040)
+    # plt.show()
 
     clustering = GaussianMixture(n_components=3)
     X = np.array([[i,j] for i,j in zip(data[0], data[1])])
@@ -74,21 +78,31 @@ def get_angle(img, peak_position = 'last', direction = 'horizontal', step = 20):
     min_std = 1.0
     r = 0.0
 
+    corners = list()
     for j in set(labels):
         xy = X[labels == j]
         if len(xy) > 5:
+            plt.plot(xy[:,0],xy[:,1],'.')
+            plt.xlim(0,2040)
+            plt.ylim(0,2040)
+            plt.show()
             slope, intercept, r_value, p_value, std_err = linregress(xy[:,0], xy[:,1])
             # print(j, slope, intercept, r_value, p_value, std_err) 
             if (std_err <= min_std) & (r_value > 0):
                 min_std = std_err
                 r = r_value
                 deg = np.arctan(slope)/np.pi*180
-
-                corner = xy[0,:]
+                # plt.plot([0,1000],[intercept,intercept+1000*slope])
+                # plt.xlim(0,2040)
+                # plt.ylim(0,2040)
+                # plt.show()
+                if abs(slope) < 0.6:
+                    corners.append(xy[0,:])
+                    print(corners)
 
         
     try:                
-        return "Angle " + np.format_float_positional(90-deg, precision=2), data, corner
+        return "Angle " + np.format_float_positional(90-deg, precision=2), data, corners
     except:
         return "Cannot determine the angle", data
 
