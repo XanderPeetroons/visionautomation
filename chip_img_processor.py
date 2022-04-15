@@ -42,41 +42,41 @@ if __name__ == "__main__":
     img_left1, img_right1 = img_separator (blur1)
     img_left2, img_right2 = img_separator (blur2)
     img_left3, img_right3 = img_separator (blur3)
-    left_img1 = rescale(img_left1, scale=0.48)
-    left_img2 = rescale(img_left2, scale=0.48)
-    left_img3 = rescale(img_left3, scale=0.48)
+    left_img1 = rescale(img_left1, scale=0.25)
+    left_img2 = rescale(img_left2, scale=0.25)
+    left_img3 = rescale(img_left3, scale=0.25)
 
     
     array = np.concatenate((left_img1,left_img2), axis=1)
-    #cv.imshow('Grey original 10x & 20x', array)
+    cv.imshow('Grey original 10x & 20x', array)
     cv.imshow('Grey original 50x', left_img3)
     ### Processing image for edges and angle calculation
 
     #cv.imshow('Left',left_img)
     #chip_image = canny_edge(left_img)
-    #chip10x = canny_edge(left_img1)
-    #cv.imshow('Canny chip 10x',chip10x)
+    chip10x = canny_edge(left_img1)
+    cv.imshow('Canny chip 10x',chip10x)
 
-    #chip20x = adapt_thresh_otsu(left_img2)
-    #post_chip20x = canny_edge(chip20x)
-    #cv.imshow('Canny chip 20x',post_chip20x)
+    chip20x = adapt_thresh_otsu(left_img2)
+    post_chip20x = canny_edge(chip20x)
+    cv.imshow('Canny chip 20x',post_chip20x)
 
     #binary_chips1, binary_chips2, binary_chips3 = adapt_thresh_bin(array)
     img50x1, img50x2, img50x3 = adapt_thresh_bin(left_img3,3,-2)    ##mean seam to be better
-    #binary_chips = adapt_thresh_otsu(array)
-    cv.imshow('Binary',img50x1)
+    binary_chip10x = adapt_thresh_otsu(left_img1)
+    #cv.imshow('Binary',img50x1)
     cv.imshow('Binary Mean',img50x2)
-    cv.imshow('Binary Gaussian',img50x3)
+    #cv.imshow('Binary Gaussian',img50x3)
     
 
-    #if background_profiler(binary_chips) >= 150:
-    #    binary_chips = contrast_enhancer(binary_chips)
-    #    print('Contraste enhanced...')
+    if background_profiler(binary_chip10x) >= 150:
+        binary_chip10x = contrast_enhancer(binary_chip10x)
+        print('Contrast enhanced...')
 
     ### Calculating angle
 
-    #textc, datac = get_angle(binary_chip, 'last', 'horizontal', 10)
-    #cv.imshow('Canny_chip', get_text(chip_image, textc))
+    textc, datac = get_angle(binary_chip10x, 'last', 'horizontal', 10)
+    cv.imshow('Canny_chip10x', get_text(chip10x, textc))
     
     
 
