@@ -7,10 +7,10 @@ from scipy.signal import find_peaks
 from scipy.stats import linregress
 #import utlis
 
-from img_separator import *
+from img_processing import *
 
-def get_array(file):
-    return cv.imread(file)
+# def get_array(file):
+#    return cv.imread(file)
 
 def get_canny_edge(img):
     canny = cv.Canny(img, 10, 15)

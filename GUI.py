@@ -83,13 +83,13 @@ class MyWindow(QMainWindow):
         """
         # BUTTONS
         self.bup = QPushButton(self)
-        self.bup.setText("+")
+        self.bup.setText("up")
         self.bup.clicked.connect(self.clickdown)
         self.bup.setMaximumSize(int(120/3240*width),int(40/2160*height))
         # self.bup.move(1600,430)
 
         self.bdown = QPushButton(self)
-        self.bdown.setText("-")
+        self.bdown.setText("down")
         self.bdown.clicked.connect(self.clickup)
         self.bdown.setMaximumSize(int(120/3240*width),int(40/2160*height))
         # self.bdown.move(1600,550)
