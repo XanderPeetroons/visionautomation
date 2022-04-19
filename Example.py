@@ -31,12 +31,6 @@ def get_binary_array(img):
     ret_right, thresh_right = cv.threshold(img, right_mean+20, 255, cv.THRESH_BINARY_INV)
     return cv.bitwise_xor(thresh_left, thresh_right, mask = None)
 
-def get_contours_array(img):
-    blank = np.zeros(img.shape[:2], dtype = 'uint8')
-    contours, hierarchies = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-
-    cv.drawContours(blank, contours, -1, (255,255,255), thickness=2)
-    return blank
 
 def get_processed_array(img):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -49,7 +43,7 @@ def get_processed_array(img):
     processed = get_adaptive_binary(blur)
 
     ### Binary + contour
-    # processed = get_contours_array(get_binary_array(blur))
+    # processed = get_contours(get_binary_array(blur))
     return processed
 
 def draw_profiling_line(img, y):

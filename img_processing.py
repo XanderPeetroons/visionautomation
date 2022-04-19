@@ -108,7 +108,7 @@ def sobel_edge (blur):
     return sobelx, sobely, sobelxy
 
 def get_contours (img):
-    contours = cv.findContours(img,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_NONE)
+    contours, hierarchies = cv.findContours(img,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_NONE)
     blank = np.zeros(img.shape[:2], dtype = 'uint8')
     cv.drawContours(blank, contours,-1, (255,255,255), thickness=1)
     return blank
@@ -139,7 +139,7 @@ def img_join(img1, img2):
     new_image = np.concatenate((img1, img2), axis = 1)
     return new_image
 
-def get_text(img, text):
+def add_text(img, text):
     imageText = img.copy()
     fontScale = 2.3
     fontFace = cv.FONT_HERSHEY_PLAIN
@@ -149,10 +149,11 @@ def get_text(img, text):
     cv.putText(imageText, text, (0, img.shape[0]), fontFace, fontScale, fontColor, fontThickness, cv.LINE_AA)
     return imageText
     
-def get_angle(img, peak_position = 'last', direction = 'horizontal', step = 20):
+def get_angle(img, peak_position = 'last', direction = 'horizontal', step = 20, n_components=3):
     ### Peak position (from left to right or top to bottom): first, last or all
     ### Direction: horizontal (for chip) or vertical (for fiber)
     ### Step: sampling the pixel (get 1 peak for every "step" pixel)
+    ### No. of components: parameter for Gaussian Mixture
     
     coord_data = []
     peak_data = []
@@ -186,22 +187,37 @@ def get_angle(img, peak_position = 'last', direction = 'horizontal', step = 20):
     data = [[item for sublist in coord_data for item in sublist],
             [item for sublist in peak_data for item in sublist]]
 
-    clustering = GaussianMixture(n_components=3)
+    clustering = GaussianMixture(n_components=n_components)
     X = np.array([[i,j] for i,j in zip(data[0], data[1])])
     labels = clustering.fit_predict(X)
     min_std = 1.0
     r = 0.0
+    line_params = [None, None]
 
     for j in set(labels):
         xy = X[labels == j]
-        if len(xy) > 5:
+        if len(xy) > 10:
             slope, intercept, r_value, p_value, std_err = linregress(xy[:,0], xy[:,1])
             # print(j, slope, intercept, r_value, p_value, std_err) 
             if (std_err <= min_std) & (r_value > 0):
                 min_std = std_err
                 r = r_value
+                line_params = [slope, intercept]
                 deg = np.arctan(slope)/np.pi*180
+
     try:                
-        return "Angle " + np.format_float_positional(90-deg, precision=2), data
+        return "Angle " + np.format_float_positional(deg, precision=2), data, line_params
     except:
-        return "Cannot determine the angle", data
+        return "Cannot determine the angle", data, line_params
+
+def draw_angle_line(img, data, line_params):
+    ### data[0] is the coord data
+    x_min = np.array([data[0]]).min()
+    x_max = np.array([data[0]]).max()
+    imgLine = img.copy()
+    slope = line_params[0]
+    intercept = line_params[1]
+    cv.line(imgLine, (x_min, int(slope*x_min+intercept)), (x_max, int(slope*x_max+intercept)),
+        (255, 255, 255), thickness=2, lineType=cv.LINE_AA)
+    
+    return imgLine
