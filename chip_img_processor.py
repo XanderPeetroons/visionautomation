@@ -11,19 +11,12 @@ import math
 import pwlf
 from PIL import Image
 
-#from img_separator import *
 from img_processing import *
 
 if __name__ == "__main__":
 
     def get_array(file):
         return cv.imread(file)
-
-    def get_contours_array(img):
-        blank = np.zeros(img.shape, dtype = 'uint8')
-        contours, hierarchies = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-        cv.drawContours(blank, contours, -1, (255,255,255), thickness=2)
-        return blank
   
     ### Segment the image
 
@@ -35,6 +28,7 @@ if __name__ == "__main__":
     gray1 = cv.cvtColor(array1, cv.COLOR_BGR2GRAY)
     gray2 = cv.cvtColor(array2, cv.COLOR_BGR2GRAY)
     gray3 = cv.cvtColor(array3, cv.COLOR_BGR2GRAY)
+
     blur1 = cv.GaussianBlur(gray1,(5,5),cv.BORDER_DEFAULT)  ##box
     blur2 = cv.GaussianBlur(gray2,(5,5),cv.BORDER_DEFAULT)  ##box
     blur3 = cv.GaussianBlur(gray3,(5,5),cv.BORDER_DEFAULT)  ##box
@@ -42,42 +36,44 @@ if __name__ == "__main__":
     img_left1, img_right1 = img_separator (blur1)
     img_left2, img_right2 = img_separator (blur2)
     img_left3, img_right3 = img_separator (blur3)
-    left_img1 = rescale(img_left1, scale=0.25)
-    left_img2 = rescale(img_left2, scale=0.25)
-    left_img3 = rescale(img_left3, scale=0.25)
 
-    
-    array = np.concatenate((left_img1,left_img2), axis=1)
-    cv.imshow('Grey original 10x & 20x', array)
-    cv.imshow('Grey original 50x', left_img3)
+    #left_img1 = rescale(img_left1, scale=0.25)
+    #left_img2 = rescale(img_left2, scale=0.25)
+    #left_img3 = rescale(img_left3, scale=0.25)
+
+    #array = np.concatenate((left_img1,left_img2), axis=1)
+    #cv.imshow('Grey original 10x & 20x', array)
+    #cv.imshow('Grey original 50x', left_img3)
+
     ### Processing image for edges and angle calculation
 
     #cv.imshow('Left',left_img)
     #chip_image = canny_edge(left_img)
-    chip10x = canny_edge(left_img1)
-    cv.imshow('Canny chip 10x',chip10x)
+    canny_chip10x = canny_edge(img_left1)
+    cv.imshow('Canny chip 10x',rescale(canny_chip10x, 0.48))
 
-    chip20x = adapt_thresh_otsu(left_img2)
-    post_chip20x = canny_edge(chip20x)
-    cv.imshow('Canny chip 20x',post_chip20x)
+    #chip20x = adapt_thresh_otsu(left_img2)
+    #post_chip20x = canny_edge(chip20x)
+    #cv.imshow('Canny chip 20x',post_chip20x)
 
     #binary_chips1, binary_chips2, binary_chips3 = adapt_thresh_bin(array)
-    img50x1, img50x2, img50x3 = adapt_thresh_bin(left_img3,3,-2)    ##mean seam to be better
-    binary_chip10x = adapt_thresh_otsu(left_img1)
+    #img50x1, img50x2, img50x3 = adapt_thresh_bin(left_img3,3,-2)    ##mean seam to be better
+    binary_chip10x = adapt_thresh_otsu(img_left1)
     #cv.imshow('Binary',img50x1)
-    cv.imshow('Binary Mean',img50x2)
+    cv.imshow('Binary chip 10x',rescale(binary_chip10x,0.48))
     #cv.imshow('Binary Gaussian',img50x3)
     
-
+    '''
     if background_profiler(binary_chip10x) >= 150:
         binary_chip10x = contrast_enhancer(binary_chip10x)
         print('Contrast enhanced...')
+    '''
 
-    ### Calculating angle
-
-    textc, datac = get_angle(binary_chip10x, 'last', 'horizontal', 10)
-    cv.imshow('Canny_chip10x', get_text(chip10x, textc))
-    
+    ### Calculating angle and drawing line
+    contour_chip10x = get_contours(binary_chip10x)
+    angled_line_chip10x, line_params = draw_angle_line(contour_chip10x, True, 'last', 10, 2)
+    textc = 'Angle: ' + get_angle(line_params[0], 0)
+    cv.imshow('Contour chip 10x', rescale(add_text(angled_line_chip10x, textc),0.48))
     
 
     ### Merging processed images

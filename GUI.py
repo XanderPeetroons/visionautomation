@@ -3,7 +3,7 @@ from turtle import width
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-import cv2
+import cv2 as cv
 from Example import *
 import sys
 from matplotlib.figure import Figure
@@ -20,6 +20,9 @@ class MyWindow(QMainWindow):
     def initUI(self):
         ### Variable for horizontal pixel
         self.line = 1000
+
+        ### Img directory
+        img_dir = 'Photos/Photo_Fiber_Obj_10X.tif'
 
         ### FONT VARIABLE
         self.fontvar = QFont('Times', 16)
@@ -46,8 +49,8 @@ class MyWindow(QMainWindow):
         """
         IMAGES
         """
-        # MOSFET IMAGE
-        pixmapimage = QPixmap('Photos/Photo_Fiber_Obj_20X.tif')
+        # CHIP FIBER IMAGE
+        pixmapimage = QPixmap(img_dir)
         pixmapimage = pixmapimage.scaled(int(700/3240*width), int(700/2160*height), Qt.KeepAspectRatio)
         self.labelimage = QLabel(self)
         self.labelimage.setPixmap(pixmapimage)
@@ -57,9 +60,9 @@ class MyWindow(QMainWindow):
 
         ### PROCESSED IMAGE gets drawn by painter 
 
-        img = get_array('Photos/Photo_Fiber_Obj_20X.tif')
-	### Processed array now will include contour (to compatible with adaptive threshold, which not require contour)
-        processed_array = get_processed_array(img) 
+        img = get_array(img_dir)
+	    ### Processed array now will include contour
+        self.processed = get_processed_array(img) 
         # cv2.imwrite('Photos/Processed_10X.jpg', processed_array)
 
         """ Read from array """
@@ -75,7 +78,6 @@ class MyWindow(QMainWindow):
         # pixmapprocessed = pixmapprocessed.scaled(int(700/3240*width),int(700/2160*height),Qt.KeepAspectRatio)
         # # self.labelprocessed.setPixmap(pixmapprocessed)
         # self.labelprocessed.setGeometry(int(800/3240*width),int(200/2160*height),int(700/3240*width),int(700/2160*height))
-
 
 
         """
@@ -107,10 +109,10 @@ class MyWindow(QMainWindow):
         self.insert_ax()
 
         # Get the picture information and store
-        array = get_array('Photos/Photo_Fiber_Obj_20X.tif')
-        self.processed = get_processed_array(array)
-        self.blank = get_contours_array(self.processed)
-        self.peaks = get_peaks(self.blank, self.line)
+
+        # self.processed = get_processed_array(array)
+        # self.blank = get_contours_array(self.processed)
+        # peaks = get_peaks(self.processed, self.line)
         
         # Max value for self.line 
         self.maxyvalue = self.processed.shape[0]
@@ -149,7 +151,8 @@ class MyWindow(QMainWindow):
     """
     def paintEvent(self, event):
         painter = QPainter(self)
-        self.pixmapprocessed = QPixmap('Photos/Processed_10X.jpg')
+        # self.pixmapprocessed = QPixmap('Photos/Processed_10X.jpg')
+        self.pixmapprocessed = convertCvImage2QtImage(self.processed) # Read from array
         self.labelprocessed = QLabel(self)
         self.pixmapprocessed = self.pixmapprocessed.scaled(int(700/3240*width),int(700/2160*height),Qt.KeepAspectRatio)
         # self.labelprocessed.setPixmap(pixmapprocessed)
@@ -183,15 +186,13 @@ class MyWindow(QMainWindow):
         # Maybe change to ax as input var for function?
         self.ax = self.figure.add_subplot(111)
         self.ax.set_title('Profiling of grayscale along the line')
-        self.ax.set_ylabel('grayscale intensity')
-        self.ax.set_xlabel('pixel')
+        self.ax.set_ylabel('Grayscale intensity')
+        self.ax.set_xlabel('Pixel')
         self.ax.set_ylim([-5,260])
         self.graph, self.graphx = None, None
 
     def plot(self):
-        array = get_array('Photos/Photo_Fiber_Obj_20X.tif')
-        processed = get_processed_array(array)
-        # blank = get_contours_array(processed)
+        processed = self.processed
         peaks = get_peaks(processed, self.line)
 
         self.figure = Figure()
@@ -202,8 +203,8 @@ class MyWindow(QMainWindow):
         self.graph = self.ax.plot(peaks, processed[self.line,:][peaks], "x", c="red")
         self.graphx = self.ax.plot(range(0,processed.shape[1]), processed[self.line,:])
         self.ax.set_title('Profiling of grayscale along the line')
-        self.ax.set_ylabel('grayscale intensity')
-        self.ax.set_xlabel('pixel')
+        self.ax.set_ylabel('Grayscale intensity')
+        self.ax.set_xlabel('Pixel')
         self.ax.set_ylim([-5,260])
         self.canvas.resize(1000,1000) 
 
@@ -232,7 +233,7 @@ class MyWindow(QMainWindow):
     def updateplot(self):
         value = self.line
         processed = self.processed
-        peaks = self.peaks
+        peaks = get_peaks(processed, self.line)
         try: 
             value = float(value)
         except ValueError:

@@ -31,12 +31,9 @@ if __name__ == "__main__":
     contour_fiber = get_contours(binary_fiber)
     # text, data, line_params = get_angle(contour_fiber, 'all', 'vertical', 20,4)
 
-    text, data, line_params = get_angle(contrast_enhancer(contrast_enhanced_fiber),
-        'all', 'vertical', 10, 6)
-    
-    angled_line_fiber = draw_angle_line(contour_fiber, data, line_params)
+    angled_line_fiber, line_params = draw_angle_line(contour_fiber, False, 'all', 10, 6)
+    text = 'Angle: ' + get_angle(line_params[0], 0)
     cv.imshow('Binary', rescale(binary_fiber, 0.48))
     cv.imshow('Contour', rescale(add_text(angled_line_fiber, text),0.48))
-    
 
     cv.waitKey(0)

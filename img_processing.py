@@ -110,7 +110,7 @@ def sobel_edge (blur):
 def get_contours (img):
     contours, hierarchies = cv.findContours(img,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_NONE)
     blank = np.zeros(img.shape[:2], dtype = 'uint8')
-    cv.drawContours(blank, contours,-1, (255,255,255), thickness=1)
+    cv.drawContours(blank, contours,-1, (255,255,255), thickness=2)
     return blank
 
 ### Other function tools to process
@@ -127,41 +127,48 @@ def segment_identifier(img, n_segments=3):
     my_pwlf = pwlf.PiecewiseLinFit(x, y)
     return my_pwlf.fit(n_segments)
 
-def img_separator(img):
+def img_separator(img, margin = 50):
+    ### margin of 50 pixel
     segment = segment_identifier(img)
     mid = int((segment[1]+segment[2])/2)
 
-    img_left = img[:, :mid+50] ### margin of 50 pixel
+    img_left = img[:, :mid+50] 
     img_right = img[:, mid-50:]
     return img_left, img_right
 
-def img_join(img1, img2):
+def img_join(img_left, img_right, margin = 50):
+    img1 = img_left[:, :img_left.shape[1]-margin] 
+    img2 = img_right[:, margin:]
     new_image = np.concatenate((img1, img2), axis = 1)
     return new_image
 
 def add_text(img, text):
     imageText = img.copy()
-    fontScale = 2.3
+    fontScale = 10
     fontFace = cv.FONT_HERSHEY_PLAIN
-    fontColor = (255, 255, 255)
-    fontThickness = 2
+    fontColor = (0, 0, 0)
+    fontThickness = 8
+    text_color_bg=(255, 255, 255)
 
+    text_size, _ = cv.getTextSize(text, fontFace, fontScale, fontThickness)
+    text_w, text_h = text_size
+    cv.rectangle(imageText, (0, img.shape[0]), (text_w, img.shape[0] - text_h), text_color_bg, -1)
     cv.putText(imageText, text, (0, img.shape[0]), fontFace, fontScale, fontColor, fontThickness, cv.LINE_AA)
     return imageText
     
-def get_angle(img, peak_position = 'last', direction = 'horizontal', step = 20, n_components=3):
+def draw_angle_line(img, chip_img = True, peak_position = 'last', step = 20, n_components=3):
     ### Peak position (from left to right or top to bottom): first, last or all
-    ### Direction: horizontal (for chip) or vertical (for fiber)
     ### Step: sampling the pixel (get 1 peak for every "step" pixel)
     ### No. of components: parameter for Gaussian Mixture
     
     coord_data = []
     peak_data = []
     
-    if direction == 'horizontal':
+    if chip_img == True:
         s = 0
-    elif direction == 'vertical':
+    else:
         s = 1
+
     for j in range(0, img.shape[s], step):
         if s == 0:
             p = img[j,:]
@@ -196,7 +203,7 @@ def get_angle(img, peak_position = 'last', direction = 'horizontal', step = 20, 
 
     for j in set(labels):
         xy = X[labels == j]
-        if len(xy) > 10:
+        if len(xy) > 20:
             slope, intercept, r_value, p_value, std_err = linregress(xy[:,0], xy[:,1])
             # print(j, slope, intercept, r_value, p_value, std_err) 
             if (std_err <= min_std) & (r_value > 0):
@@ -204,20 +211,25 @@ def get_angle(img, peak_position = 'last', direction = 'horizontal', step = 20, 
                 r = r_value
                 line_params = [slope, intercept]
                 deg = np.arctan(slope)/np.pi*180
+    try:
+        x_min = np.array([data[0]]).min()
+        x_max = np.array([data[0]]).max()
+        imgLine = img.copy()
+        # imgLine = cv.cvtColor(img, cv.COLOR_GRAY2RGB)
+        slope = line_params[0]
+        intercept = line_params[1]
 
-    try:                
-        return "Angle " + np.format_float_positional(deg, precision=2), data, line_params
+        if chip_img == True:
+            cv.line(imgLine, (int(slope*x_min+intercept), x_min), (int(slope*x_max+intercept), x_max),
+                (255, 0, 0), thickness=6, lineType=cv.LINE_AA)
+        else:
+            cv.line(imgLine, (x_min, int(slope*x_min+intercept)), (x_max, int(slope*x_max+intercept)),
+                (255, 0, 0), thickness=6, lineType=cv.LINE_AA)
+              
+        return imgLine, line_params
     except:
-        return "Cannot determine the angle", data, line_params
+        return img, line_params
 
-def draw_angle_line(img, data, line_params):
-    ### data[0] is the coord data
-    x_min = np.array([data[0]]).min()
-    x_max = np.array([data[0]]).max()
-    imgLine = img.copy()
-    slope = line_params[0]
-    intercept = line_params[1]
-    cv.line(imgLine, (x_min, int(slope*x_min+intercept)), (x_max, int(slope*x_max+intercept)),
-        (255, 255, 255), thickness=2, lineType=cv.LINE_AA)
-    
-    return imgLine
+def get_angle(slope1, slope2):
+    deg = 90 - np.arctan(slope1)/np.pi*180 - np.arctan(slope2)/np.pi*180
+    return np.format_float_positional(deg, precision=2)
