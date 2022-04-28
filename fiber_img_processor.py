@@ -56,15 +56,6 @@ if __name__ == "__main__":
 
     img_left, img_right = img_separator (blur)
     
-<<<<<<< HEAD
-    binary_fiber = adapt_thresh_otsu(fiber)
-    contour_fiber = get_contours_array(binary_fiber)
-    # text, data, corner = get_angle(contrast_enhancer(fiber), 'all', 'vertical', 10)
-    cv.imshow('Binary', binary_fiber)
-    # cv.imshow('Contour', get_text(contour_fiber, text))
-    
-    edge = get_vertical_edge(contour_fiber)
-=======
     if background_profiler(img_right) >= 150:
         contrast_enhanced_fiber = contrast_enhancer(img_right)
     else:
@@ -78,6 +69,5 @@ if __name__ == "__main__":
     text = 'Angle: ' + get_angle(line_params[0], 0)
     cv.imshow('Binary', rescale(binary_fiber, 0.48))
     cv.imshow('Contour', rescale(add_text(angled_line_fiber, text),0.48))
->>>>>>> c9400a6d4c34544d74337b07d6cadbd55490a649
 
     cv.waitKey(0)

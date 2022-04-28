@@ -8,25 +8,36 @@ from Example import *
 import sys
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+import os
+
+directory = 'Photos/'
+photos = os.listdir(directory)
+
+### Img directory
+nb_pic = 0
+img_dir = 'Photos/' + photos[nb_pic]
 
 
 class MyWindow(QMainWindow):
+    
+
     def __init__(self):
         super(MyWindow, self).__init__()
         # self.setGeometry(0,0,4000,2000)
         self.setWindowTitle("GUI")
+        self.newimage = False
         self.initUI()
 
+
     def initUI(self):
+        global img_dir
         ### Variable for horizontal pixel
         self.line = 1000
-
-        ### Img directory
-        img_dir = 'Photos/Photo_Fiber_Obj_10X.tif'
 
         ### FONT VARIABLE
         self.fontvar = QFont('Times', 16)
         self.fontvar.setBold(True)
+        print('again', img_dir,nb_pic)
 
         """
         TEXT
@@ -49,15 +60,14 @@ class MyWindow(QMainWindow):
         """
         IMAGES
         """
-<<<<<<< HEAD
-        # MOSFET IMAGE
-        pixmapimage = QPixmap('Photos/Photo_Fiber_Obj_10X.tif')
-=======
+        print(img_dir)
+        # if self.newimage:
+            # self.labelimage.clear()
         # CHIP FIBER IMAGE
         pixmapimage = QPixmap(img_dir)
->>>>>>> c9400a6d4c34544d74337b07d6cadbd55490a649
         pixmapimage = pixmapimage.scaled(int(700/3240*width), int(700/2160*height), Qt.KeepAspectRatio)
-        self.labelimage = QLabel(self)
+        if not self.newimage:
+            self.labelimage = QLabel(self)
         self.labelimage.setPixmap(pixmapimage)
         self.labelimage.setGeometry(int(20/3240*width),int(200/2160*height),int(700/3240*width),int(700/2160*height))
 
@@ -65,17 +75,10 @@ class MyWindow(QMainWindow):
 
         ### PROCESSED IMAGE gets drawn by painter 
 
-<<<<<<< HEAD
-        img = get_array('Photos/Photo_Fiber_Obj_10X.tif')
-	### Processed array now will include contour (to compatible with adaptive threshold, which not require contour)
-        processed_array = get_processed_array(img) 
-        # cv2.imwrite('Photos/Processed_50X.jpg', processed_array)
-=======
         img = get_array(img_dir)
 	    ### Processed array now will include contour
         self.processed = get_processed_array(img) 
         # cv2.imwrite('Photos/Processed_10X.jpg', processed_array)
->>>>>>> c9400a6d4c34544d74337b07d6cadbd55490a649
 
         """ Read from array """
         # img = cv2.imread('2.jpg')
@@ -113,6 +116,11 @@ class MyWindow(QMainWindow):
         self.textline.setMaximumSize(int(120/3240*width),int(40/2160*height))
         self.textline.setGeometry(int(1600/3240*width),int(490/2160*height),int(120/3240*width),int(40/2160*height))
 
+        self.bnext = QPushButton(self)
+        self.bnext.setText("Next Image")
+        self.bnext.clicked.connect(self.clicknext)
+        self.bnext.setMaximumSize(int(120/3240*width),int(40/2160*height))
+        self.bnext.setGeometry(int(2900/3240*width),int(100/2160*height),int(120/3240*width),int(40/2160*height))
 
         """ 
         PLOT
@@ -121,17 +129,10 @@ class MyWindow(QMainWindow):
         self.insert_ax()
 
         # Get the picture information and store
-<<<<<<< HEAD
-        array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
-        self.processed = get_processed_array(array)
-        self.blank = get_contours_array(self.processed)
-        self.peaks = get_peaks(self.blank, self.line)
-=======
 
         # self.processed = get_processed_array(array)
         # self.blank = get_contours_array(self.processed)
         # peaks = get_peaks(self.processed, self.line)
->>>>>>> c9400a6d4c34544d74337b07d6cadbd55490a649
         
         # Max value for self.line 
         self.maxyvalue = self.processed.shape[0]
@@ -149,6 +150,7 @@ class MyWindow(QMainWindow):
         vboxbuttons.addWidget(self.bup)
         vboxbuttons.addWidget(self.textline)
         vboxbuttons.addWidget(self.bdown)
+        vboxbuttons.addWidget(self.bnext)
 
         hbox = QHBoxLayout()
         hbox.addSpacing(int(600/3240*width))
@@ -170,8 +172,8 @@ class MyWindow(QMainWindow):
     """
     def paintEvent(self, event):
         painter = QPainter(self)
-        # self.pixmapprocessed = QPixmap('Photos/Processed_10X.jpg')
-        self.pixmapprocessed = convertCvImage2QtImage(self.processed) # Read from array
+        self.pixmapprocessed = QPixmap('Photos/Processed_10X.jpg')
+        # self.pixmapprocessed = convertCvImage2QtImage(self.processed) 
         self.labelprocessed = QLabel(self)
         self.pixmapprocessed = self.pixmapprocessed.scaled(int(700/3240*width),int(700/2160*height),Qt.KeepAspectRatio)
         # self.labelprocessed.setPixmap(pixmapprocessed)
@@ -211,13 +213,7 @@ class MyWindow(QMainWindow):
         self.graph, self.graphx = None, None
 
     def plot(self):
-<<<<<<< HEAD
-        array = get_array('Photos/Photo_Fiber_Obj_10X.tif')
-        processed = get_processed_array(array)
-        # blank = get_contours_array(processed)
-=======
         processed = self.processed
->>>>>>> c9400a6d4c34544d74337b07d6cadbd55490a649
         peaks = get_peaks(processed, self.line)
 
         self.figure = Figure()
@@ -253,6 +249,18 @@ class MyWindow(QMainWindow):
             self.line = int(text)
             self.updateplot()
             self.update() # painter update
+
+    def clicknext(self):
+        """ One picture next """
+        global nb_pic 
+        global img_dir
+
+        print('here')
+        nb_pic += 1
+        img_dir = 'Photos/' + photos[nb_pic]
+        self.newimage = True
+        self.initUI()
+        
             
 
     def updateplot(self):
