@@ -32,7 +32,7 @@ def get_processed_array(img):
     
     binary_fiber = adapt_thresh_otsu(contrast_enhanced_fiber)
     contour_fiber = get_contours(binary_fiber)
-    angled_line_fiber, line_params_fiber = draw_angle_line(contour_fiber, False, 'all', 20, 6)
+    angled_line_fiber, line_params_fiber = draw_angle_line(contour_fiber, False, 'all', 10, 6)
     
     ### Calculate angle between chip edge and fiber axis
     if (line_params_chip[0] is None) | (line_params_fiber[0] is None):

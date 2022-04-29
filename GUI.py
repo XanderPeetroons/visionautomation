@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import cv2 as cv
-from Example import *
+from img_processing import *
 import sys
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -73,12 +73,12 @@ class MyWindow(QMainWindow):
 
 
 
-        ### PROCESSED IMAGE gets drawn by painter 
+        ### PROCESSED IMAGE
 
         img = get_array(img_dir)
-	    ### Processed array now will include contour
-        self.processed = get_processed_array(img) 
-        # cv2.imwrite('Photos/Processed_10X.jpg', processed_array)
+
+        self.processed = get_processed_array(img)
+        cv.imwrite('Photos/Processed/Processed.jpg', self.processed)
 
         """ Read from array """
         # img = cv2.imread('2.jpg')
@@ -100,13 +100,13 @@ class MyWindow(QMainWindow):
         """
         # BUTTONS
         self.bup = QPushButton(self)
-        self.bup.setText("up")
+        self.bup.setText("Up")
         self.bup.clicked.connect(self.clickdown)
         self.bup.setMaximumSize(int(120/3240*width),int(40/2160*height))
         # self.bup.move(1600,430)
 
         self.bdown = QPushButton(self)
-        self.bdown.setText("down")
+        self.bdown.setText("Down")
         self.bdown.clicked.connect(self.clickup)
         self.bdown.setMaximumSize(int(120/3240*width),int(40/2160*height))
         # self.bdown.move(1600,550)
@@ -122,17 +122,12 @@ class MyWindow(QMainWindow):
         self.bnext.setMaximumSize(int(120/3240*width),int(40/2160*height))
         self.bnext.setGeometry(int(2900/3240*width),int(100/2160*height),int(120/3240*width),int(40/2160*height))
 
+
         """ 
         PLOT
         """
         # Initialize Axes
         self.insert_ax()
-
-        # Get the picture information and store
-
-        # self.processed = get_processed_array(array)
-        # self.blank = get_contours_array(self.processed)
-        # peaks = get_peaks(self.processed, self.line)
         
         # Max value for self.line 
         self.maxyvalue = self.processed.shape[0]
@@ -142,6 +137,7 @@ class MyWindow(QMainWindow):
 
         # Update the graph
         self.updateplot()
+
 
         """
         LAY OUT
@@ -161,19 +157,19 @@ class MyWindow(QMainWindow):
         vbox.addSpacing(int(420/2160*height))
         vbox.addLayout(hbox)
         vbox.addSpacing(int(420/2160*height))
-        vbox.addWidget(self.canvas)
+        vbox.addWidget(self.canvasScale)
         
         self.centralWidget = QWidget()
         self.centralWidget.setLayout(vbox)
         self.setCentralWidget(self.centralWidget)
+
 
     """
     LINE ON IMAGE
     """
     def paintEvent(self, event):
         painter = QPainter(self)
-        self.pixmapprocessed = QPixmap('Photos/Processed_10X.jpg')
-        # self.pixmapprocessed = convertCvImage2QtImage(self.processed) 
+        self.pixmapprocessed = QPixmap('Photos/Processed/Processed.jpg')
         self.labelprocessed = QLabel(self)
         self.pixmapprocessed = self.pixmapprocessed.scaled(int(700/3240*width),int(700/2160*height),Qt.KeepAspectRatio)
         # self.labelprocessed.setPixmap(pixmapprocessed)
@@ -282,7 +278,6 @@ class MyWindow(QMainWindow):
         self.graph = self.ax.plot(peaks, processed[self.line,:][peaks], "x", c="red")
         self.graphx = self.ax.plot(range(0,processed.shape[1]), processed[self.line,:])
         self.canvas.draw()
-
       
 
 if __name__ == "__main__":

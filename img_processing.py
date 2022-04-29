@@ -1,8 +1,6 @@
 ### Import library
-from tkinter import Image
 import cv2 as cv
 from cv2 import IMWRITE_JPEG2000_COMPRESSION_X1000
-from cv2 import THRESH_BINARY
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
@@ -13,11 +11,16 @@ import pwlf
 from sklearn.mixture import GaussianMixture 
 from PIL import Image
 
-### Basic functions
 
-def get_array(file):    #I don't know why this is not imported
+### Some definitions:
+### Kernel: matrix that defines size of convolution, weights applied and an anchor point
+### Convolutions: mathematical operations between two functions that create a third function. In OpenCV
+
+### Import image
+def get_array(file):
     return cv.imread(file)
 
+### Rescale the image during cv.imgshow
 def rescale(img, scale = 0.75):
     width = int (img.shape[1]*scale)
     height = int (img.shape[0]*scale)
@@ -26,23 +29,7 @@ def rescale(img, scale = 0.75):
 
     return cv.resize(img, dimensions, interpolation=cv.INTER_AREA)
 
-def canny_edge (img):
-    edges = cv.Canny(img,10,50) #Arguments:  1) input image, 2) minVal, 3) maxVal, 4) aperture size (default = 3), 5) L2gradient
-    return edges
-
-### Image treatment
-
-def contrast_enhancer(img, gamma = 14):
-    ### When gamma<1 (contrast factor), the original dark regions will be brighter and the histogram will be shifted to the right
-    ### Whereas it will be the opposite with gamma>1.
-    ### Image argument in grayscale
-
-    lookUpTable = np.empty((1,256), np.uint8) # new array with a given shape and type
-    for i in range(256):
-    	lookUpTable[0,i] = np.clip(pow(i / 255.0, gamma) * 255.0, 0, 255) #array with max values of 0 & 255
-    enhanced = cv.LUT(img, lookUpTable) # new color map
-    return enhanced
-
+### Calculate background brightness by quickly detecting fiber region (not neccessary if we let user to define AOI)
 def background_profiler(img):
     ### Vertical profiling to calculate the background grayscale intensity.
     ### If the background is too bright (i.e. > 127), contrast_enhancer must be used.
@@ -50,13 +37,43 @@ def background_profiler(img):
     x = np.array(list(np.mean(img[j,:]) for j in range(0,img.shape[0])))
     peaks, _ = find_peaks(x, prominence=15)
 
-    first_peak = peaks[0]
-    last_peak = peaks[len(peaks)-1]
-    
-    ### margin of 50 pixels
-    background= np.concatenate((img[:first_peak-50,:].ravel(),img[last_peak+50:,:].ravel()))
-    return np.median(background)
+    if  len(peaks) > 0:
+        first_peak = peaks[0]
+        last_peak = peaks[len(peaks)-1]
+        if (first_peak - 50 > 0) & (last_peak + 50 < img.shape[0]):
+            ### margin of 50 pixels
+            background= np.concatenate((img[:first_peak-50,:].ravel(),img[last_peak+50:,:].ravel()))
+        else:
+            background= np.concatenate((img[:first_peak,:].ravel(),img[last_peak:,:].ravel()))
+        return np.median(background)
+    else:
+        return 0
 
+### Enhancing contrast before performing binary conversion
+def contrast_enhancer(img, gamma = 14):
+    ### When gamma<1 (contrast factor), the original dark regions will be brighter and the histogram will be shifted to the right
+    ### Whereas it will be the opposite with gamma>1.
+    ### Image argument in grayscale
+
+    lookUpTable = np.empty((1,256), np.uint8) # new array with a given shape and type
+    for i in range(256):
+        lookUpTable[0,i] = np.clip(pow(i / 255.0, gamma) * 255.0, 0, 255) #array with max values of 0 & 255
+    enhanced = cv.LUT(img, lookUpTable) # new color map
+    return enhanced
+
+### Perform canny edge detection
+def canny_edge (img):
+    edges = cv.Canny(img,10,50) #Arguments:  1) input image, 2) minVal, 3) maxVal, 4) aperture size (default = 3), 5) L2gradient
+    return edges
+
+### Perform sobel edge detection
+def sobel_edge (blur):
+    sobelx = cv.Sobel(blur, ddepth=cv.CV_64F, dx=1, dy=0, ksize=3)
+    sobely = cv.Sobel(blur, ddepth=cv.CV_64F, dx=0, dy=1, ksize=3)
+    sobelxy = cv.Sobel(blur, ddepth=cv.CV_64F, dx=1, dy=1, ksize=3)
+    return sobelx, sobely, sobelxy
+
+### Perform binary conversion 
 def adapt_thresh_bin (img,x,y):
     ret1, th1 = cv.threshold(img, 127, 255, cv.THRESH_BINARY)
     th2 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY,x,y) #number of pixels
@@ -99,49 +116,41 @@ def adapt_thresh_otsu(img):
 
     return th1 #, th2, th3
 
-### Additional image treatments
 
-def sobel_edge (blur):
-    sobelx = cv.Sobel(blur, ddepth=cv.CV_64F, dx=1, dy=0, ksize=3)
-    sobely = cv.Sobel(blur, ddepth=cv.CV_64F, dx=0, dy=1, ksize=3)
-    sobelxy = cv.Sobel(blur, ddepth=cv.CV_64F, dx=1, dy=1, ksize=3)
-    return sobelx, sobely, sobelxy
-
+### Draw contour based on binary image
 def get_contours (img):
     contours, hierarchies = cv.findContours(img,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_NONE)
     blank = np.zeros(img.shape[:2], dtype = 'uint8')
     cv.drawContours(blank, contours,-1, (255,255,255), thickness=2)
     return blank
 
-### Other function tools to process
-
-### Some definitions:
-### Kernel: matrix that defines size of convolution, weights applied and an anchor point
-### Convolutions: mathematical operations between two functions that create a third function. In OpenCV
-
-def segment_identifier(img, n_segments=3):
-
+### Detect fiber and chip region (not neccessary if we let user to define AOI)
+def img_separator(img, vline, upper_hline, lower_hline, margin = 0):
+    ### margin means the additional pixels before and after vline to ensure the robustness of algorithm
+    ### auto-separation
+    """
     x = np.arange(0, img.shape[1])
     y = np.array(list(np.mean(img[:,j]) for j in range(0,img.shape[1])))
     
     my_pwlf = pwlf.PiecewiseLinFit(x, y)
-    return my_pwlf.fit(n_segments)
-
-def img_separator(img, margin = 50):
-    ### margin of 50 pixel
-    segment = segment_identifier(img)
+    segment = my_pwlf.fit(3)
     mid = int((segment[1]+segment[2])/2)
-
-    img_left = img[:, :mid+50] 
-    img_right = img[:, mid-50:]
+    """
+    
+    ### manual separation
+    mid = vline 
+    img_left = img[:, :mid+margin]
+    img_right = img[lower_hline:upper_hline, mid-margin:]
     return img_left, img_right
 
-def img_join(img_left, img_right, margin = 50):
+### Join chip and fiber images into final image
+def img_join(img_left, img_right, margin = 0):
     img1 = img_left[:, :img_left.shape[1]-margin] 
     img2 = img_right[:, margin:]
     new_image = np.concatenate((img1, img2), axis = 1)
     return new_image
 
+### Add angle value as a text on image (not neccessary in the final GUI)
 def add_text(img, text):
     imageText = img.copy()
     fontScale = 10
@@ -156,7 +165,8 @@ def add_text(img, text):
     cv.putText(imageText, text, (0, img.shape[0]), fontFace, fontScale, fontColor, fontThickness, cv.LINE_AA)
     return imageText
     
-def draw_angle_line(img, chip_img = True, peak_position = 'last', step = 20, n_components=3):
+### Detect major axial of fiber and chip to calculate they angle
+def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_components=3):
     ### Peak position (from left to right or top to bottom): first, last or all
     ### Step: sampling the pixel (get 1 peak for every "step" pixel)
     ### No. of components: parameter for Gaussian Mixture
@@ -230,6 +240,57 @@ def draw_angle_line(img, chip_img = True, peak_position = 'last', step = 20, n_c
     except:
         return img, line_params
 
+### Calculate angle between 2 lines
 def get_angle(slope1, slope2):
     deg = 90 - np.arctan(slope1)/np.pi*180 - np.arctan(slope2)/np.pi*180
     return np.format_float_positional(deg, precision=2)
+
+### Calculate vertical distance between point to line
+def get_distance(line_params_chip, vline, img_left):
+    return 0
+
+### Main function to yield processed image
+def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components):
+    ### Step 1: Gray conversion + Smoothening
+    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    blur = cv.GaussianBlur(gray, (0,0), 2)
+
+    ### Step 2: Image separation and processing
+    img_left, img_right = img_separator (blur)
+    
+    ### Chip img processing
+    binary_chip = adapt_thresh_otsu(img_left)
+    contour_chip = get_contours(binary_chip)
+    angled_line_chip, line_params_chip = get_axial_line(contour_chip, True, 'last', 10, 2)
+    
+    ### Fiber img processing
+    #if background_profiler(img_right) >= 150:
+    #    contrast_enhanced_fiber = contrast_enhancer(img_right)
+    #else:
+    contrast_enhanced_fiber = img_right.copy()
+    
+    binary_fiber = adapt_thresh_otsu(contrast_enhanced_fiber)
+    contour_fiber = get_contours(binary_fiber)
+    angled_line_fiber, line_params_fiber = get_axial_line(contour_fiber, False, 'all', 10, 6)
+    
+    ### Step 3: Calculate angle alpha 1 (between chip edge and vline) and alpha 2 (between chip edge and fiber axis)
+    ### Alpha 1
+    alpha1 = get_angle(line_params_chip[0], np.inf)
+    alpha2 = get_angle(line_params_chip[0], line_params_fiber[0])
+    """
+    if (line_params_chip[0] is None) | (line_params_fiber[0] is None):
+        chip_fiber_angle = 'Cannot determine angle'
+    else:
+        chip_fiber_angle = 'Angle: ' + get_angle(line_params_chip[0], line_params_fiber[0])
+    """
+
+    ### Step 4: Detect corners  and calculate vertical distance (to chip edge)
+    distance = get_distance(line_params_chip, vline, img_left)
+    
+    ### Step 5: Join image and return angle value
+    processed = img_join(angled_line_chip, angled_line_fiber) # if we want to show angled line img
+    # processed = img_join(contour_chip, contour_fiber) # if we want to show only contour img
+    return processed, alpha1, alpha2, distance
+
+
+
