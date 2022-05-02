@@ -143,6 +143,14 @@ def img_separator(img, vline, margin = 0):
     img_right = img[:, mid-margin:]
     return img_left, img_right
 
+### Return cropped image of the fiber using the lines defined by the user
+def get_cropped_image(img, vline, topline, botline, margin=0):
+    ### topline and botline should be number of pixel of the array
+    img_left, img_right = img_separator(img,vline, margin)
+    img_cropped = img_right[topline-margin:botline+margin,:]
+    return img_cropped
+
+
 ### Join chip and fiber images into final image
 def img_join(img_left, img_right, margin = 0):
     img1 = img_left[:, :img_left.shape[1]-margin] 
@@ -211,6 +219,7 @@ def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_co
 
     clustering = GaussianMixture(n_components=n_components)
     X = np.array([[i,j] for i,j in zip(data[0], data[1])])
+    print('shape',X.shape)
     labels = clustering.fit_predict(X)
     min_std = 1.0
     r = 0.0
@@ -309,7 +318,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     
     binary_fiber = adapt_thresh_otsu(contrast_enhanced_fiber)
     contour_fiber = get_contours(binary_fiber)
-    angled_line_fiber, line_params_fiber, _, _ = get_axial_line(contour_fiber[lower_hline:upper_hline,:], 
+    angled_line_fiber, line_params_fiber, _, _ = get_axial_line(contour_fiber[upper_hline:lower_hline,:], 
         False, 'all', 20, cluster_n_components[1])
     
     ### Step 3: Calculate angle alpha 1 (between chip edge and vline) and alpha 2 (between chip edge and fiber axis)
@@ -324,12 +333,12 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     """
 
     ### Step 4: Detect corners and calculate vertical distance (to chip edge)
-    d, corners = get_distance(img_right[lower_hline:upper_hline,:], vline, line_params_chip, angled_line_fiber)
+    d, corners = get_distance(img_right[upper_hline:lower_hline,:], vline, line_params_chip, angled_line_fiber)
 
     ### Step 5: Join image and return angle value
-    processed = img_join(angled_line_chip[lower_hline:upper_hline,:], angled_line_fiber) # if we want to show angled line img
+    processed = img_join(angled_line_chip[upper_hline:lower_hline,:], angled_line_fiber) # if we want to show angled line img
     # processed = img_join(contour_chip[lower_hline:upper_hline,:], contour_fiber[lower_hline:upper_hline,:]) # if we want to show only contour img
-
+    processed = np.array(processed)
     ### Step 6: Draw distance
     rad = np.arctan(line_params_chip[0])
     if len(corners) > 0:
@@ -341,9 +350,9 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     else:
         processed2 = processed.copy()
 
-    height = upper_hline-lower_hline
+    height = lower_hline-upper_hline
     cropped = processed2[:,max(int(vline-height/2),0):min(int(vline+height/2),processed.shape[1])]
-    return cropped, alpha1, alpha2, d, corners
+    return processed, cropped, alpha1, alpha2, d, corners
 
 
 
