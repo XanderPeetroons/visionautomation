@@ -148,7 +148,7 @@ def get_cropped_image(img, vline, topline, botline, margin=0):
     ### topline and botline should be number of pixel of the array
     # img_left, img_right = img_separator(img,vline, margin)
     height = botline-topline
-    img_cropped = img[ topline:botline, max( int(vline-height/2),0 ):min( int(vline+height/2),processed.shape[1] ) ]
+    img_cropped = img[ topline:botline, max( int(vline-height/2),0 ):min( int(vline+height/2),img.shape[1] ) ]
     return img_cropped
 
 
