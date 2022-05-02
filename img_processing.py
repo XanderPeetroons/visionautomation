@@ -143,11 +143,12 @@ def img_separator(img, vline, margin = 0):
     img_right = img[:, mid-margin:]
     return img_left, img_right
 
-### Return cropped image of the fiber using the lines defined by the user
+### Return cropped image of the fiber and the chip using the lines defined by the user
 def get_cropped_image(img, vline, topline, botline, margin=0):
     ### topline and botline should be number of pixel of the array
-    img_left, img_right = img_separator(img,vline, margin)
-    img_cropped = img_right[topline-margin:botline+margin,:]
+    # img_left, img_right = img_separator(img,vline, margin)
+    height = botline-topline
+    img_cropped = img[ topline:botline, max( int(vline-height/2),0 ):min( int(vline+height/2),processed.shape[1] ) ]
     return img_cropped
 
 
@@ -352,7 +353,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
 
     height = lower_hline-upper_hline
     cropped = processed2[:,max(int(vline-height/2),0):min(int(vline+height/2),processed.shape[1])]
-    return processed, cropped, alpha1, alpha2, d, corners
+    return cropped, alpha1, alpha2, d, corners
 
 
 
