@@ -47,6 +47,7 @@ class MyWindow(QMainWindow):
         ### Variable for binary and threshold
         self.binary = [False, False]
         self.threshold = [63, 135]
+        self.nb_cluster_components = [5,5]
 
         # Initialize cropped and processed flags 
         self.drawCropped = False
@@ -54,8 +55,7 @@ class MyWindow(QMainWindow):
         
         # Initialize text event 
         self.textchangeclusterfiber = False
-        #self.textchangebinarychip = False
-        #self.textchangebinaryfiber = False
+        self.textchangeclusterchip = False
 
         ### FONT VARIABLE
         self.fontvar = QFont('Times', 16)
@@ -136,10 +136,12 @@ class MyWindow(QMainWindow):
         self.images = QLabel(self)
         self.images.setMaximumHeight(int(2/3*height))
         
+        self.chip = QLabel("Chip",self)
+        self.fiber = QLabel("Fiber",self)
+        
+        self.thresh = QLabel("Binary threshold (< 250): ",self)
+        self.clust = QLabel("Fiber angle (< 30): ",self)
         self.cordet = QLabel("Corner detection: ",self)
-        self.clustfiber = QLabel("Fiber angle detection (< 30): ",self)
-        self.thrchip = QLabel("Binary threshold_chip (< 255): ",self)
-        self.thrfiber = QLabel("Binary threshold_fiber (< 250): ",self)
         
         self.alpha1label = QLabel("Angle between chip and vertical axis: ",self)
         self.alpha2label = QLabel("Angle between fiber and horizontal axis: ",self)
@@ -151,20 +153,23 @@ class MyWindow(QMainWindow):
 
         # INPUT TEXT
         self.cornerf = QLineEdit(self)
-        #self.cornerf.textChanged.connect(self.fibercorner)
-        self.cornerf.setMaximumWidth(200)
+        self.cornerf.setMaximumWidth(100)
 
-        self.fiber = QLineEdit(self)
-        self.fiber.textChanged.connect(self.clusterfiber)
-        self.fiber.setMaximumWidth(200)
+        self.chipvalue = QLineEdit(self)
+        self.chipvalue.textChanged.connect(self.clusterchip)
+        self.chipvalue.setMaximumWidth(100)
+
+        self.fibervalue = QLineEdit(self)
+        self.fibervalue.textChanged.connect(self.clusterfiber)
+        self.fibervalue.setMaximumWidth(100)
 
         self.contourc = QLineEdit(self)
         self.contourc.textChanged.connect(self.binarychip)
-        self.contourc.setMaximumWidth(200)
+        self.contourc.setMaximumWidth(100)
 
         self.contourf = QLineEdit(self)
         self.contourf.textChanged.connect(self.binaryfiber)
-        self.contourf.setMaximumWidth(200)
+        self.contourf.setMaximumWidth(100)
         
         # BUTTONS
         self.bup = QPushButton(self)
@@ -182,13 +187,13 @@ class MyWindow(QMainWindow):
         self.bleft = QPushButton(self)
         self.bleft.setText("Left")
         #self.bleft.clicked.connect(self.clickleft)
-        self.bleft.setMaximumSize(int(180/3240*width),int(80/2160*height))
-        # self.bup.move(1600,430)
+        self.bleft.setMaximumSize(int(400/3240*width),int(80/2160*height))
+        #self.bup.move(1600,430)
 
         self.bright = QPushButton(self)
         self.bright.setText("Right")
         #self.bright.clicked.connect(self.clickright)
-        self.bright.setMaximumSize(int(180/3240*width),int(80/2160*height))
+        self.bright.setMaximumSize(int(400/3240*width),int(80/2160*height))
 
         self.textline = QLineEdit()
         self.textline.textChanged.connect(self.textchanged)
@@ -229,7 +234,7 @@ class MyWindow(QMainWindow):
         
         layout = QGridLayout()
         
-        layout.addWidget(self.images, 0, 0, 1, 7) ## label covering half of window
+        layout.addWidget(self.images, 0, 0, 1, 9) ## label covering half of window
         
         ## Button
         layout.addWidget(self.bleft, 2, 0)
@@ -238,25 +243,29 @@ class MyWindow(QMainWindow):
         layout.addWidget(self.bprocess, 3, 1)   
 
         ## Text
-        layout.addWidget(self.thrchip, 1, 3)
-        layout.addWidget(self.thrfiber, 2, 3)
-        layout.addWidget(self.clustfiber, 3, 3)
+        layout.addWidget(self.thresh, 2, 3)
+        layout.addWidget(self.clust, 3, 3)
         layout.addWidget(self.cordet, 4, 3)
+
+        ## Text title
+        layout.addWidget(self.chip, 1, 4)
+        layout.addWidget(self.fiber, 1, 5)
         
         ## Input parameters
-        layout.addWidget(self.contourc, 1, 4)
-        layout.addWidget(self.contourf, 2, 4)
-        layout.addWidget(self.fiber, 3, 4)
-        layout.addWidget(self.cornerf, 4, 4)
+        layout.addWidget(self.contourc, 2, 4)
+        layout.addWidget(self.contourf, 2, 5)
+        layout.addWidget(self.chipvalue, 3, 4)
+        layout.addWidget(self.fibervalue, 3, 5)
+        layout.addWidget(self.cornerf, 4, 5)
 
         ## Results
-        layout.addWidget(self.alpha1label, 1, 6)
-        layout.addWidget(self.alpha2label, 2, 6)
-        layout.addWidget(self.tethalabel, 3, 6)
+        layout.addWidget(self.alpha1label, 1, 7)
+        layout.addWidget(self.alpha2label, 2, 7)
+        layout.addWidget(self.tethalabel, 3, 7)
 
-        layout.addWidget(self.alpha1value, 1, 7)
-        layout.addWidget(self.alpha2value, 2, 7)
-        layout.addWidget(self.tethavalue, 3, 7)
+        layout.addWidget(self.alpha1value, 1, 8)
+        layout.addWidget(self.alpha2value, 2, 8)
+        layout.addWidget(self.tethavalue, 3, 8)
             
         self.centralWidget = QWidget() 
         self.centralWidget.setLayout(layout)
@@ -338,8 +347,7 @@ class MyWindow(QMainWindow):
             pxlmidline = int(self.midline/800*size[1])
             pxltopline = int(self.topline/800*size[0])
             pxlbotline = int(self.botline/800*size[0])
-            if self.textchangeclusterfiber == False:
-                self.nb_cluster_components = [5,5]
+
             processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, self.nb_cluster_components, self.binary, self.threshold)
 
             # Save image
@@ -354,11 +362,10 @@ class MyWindow(QMainWindow):
             self.drawProcessed = False
 
             # Print values
-            self.alpha1value.setText(str(processed_image[1]) + " " + u"\u2103")
-            self.alpha2value.setText(str(processed_image[2]) + " " + u"\u2103")
+            self.alpha1value.setText(str(processed_image[1]) + " " + u"\u00b0")
+            self.alpha2value.setText(str(processed_image[2]) + " " + u"\u00b0")
             self.tethavalue.setText(str(processed_image[3]) + " " + "pixels")
             
-
 
     def mousePressEvent(self,event):
         if event.button() == Qt.LeftButton:
@@ -450,6 +457,15 @@ class MyWindow(QMainWindow):
             self.updateplot()
             self.update() # painter update
 
+    def clusterchip(self, text):
+        """ Intersection to the input pixel """
+        if text == "" or not isinstance(int(text),int):
+            print('not an integer')
+            self.textchangeclusterchip = False
+        else: 
+            self.textchangeclusterchip = True
+            self.nb_cluster_components[0] = int(text)
+            
     def clusterfiber(self, text):
         """ Intersection to the input pixel """
         if text == "" or not isinstance(int(text),int):
@@ -457,7 +473,7 @@ class MyWindow(QMainWindow):
             self.textchangeclusterfiber = False
         else: 
             self.textchangeclusterfiber = True
-            self.nb_cluster_components = [5, int(text)]
+            self.nb_cluster_components[1] = int(text)  
 
     def binarychip(self, text):
         """ Intersection to the input pixel """
