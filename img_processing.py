@@ -265,8 +265,11 @@ def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_co
 
 ### Calculate angle between 2 lines
 def get_angle(slope1, slope2):
-    deg = 90 - np.arctan(slope1)/np.pi*180 - np.arctan(slope2)/np.pi*180
-    return np.format_float_positional(deg, precision=2)
+    try:
+        deg = 90 - np.arctan(slope1)/np.pi*180 - np.arctan(slope2)/np.pi*180
+        return np.format_float_positional(deg, precision=2)
+    except:
+        return 'Cannot determine angle'
 
 ### Calculate vertical distance between point to line
 def get_distance(img_right, vline, line_params_chip, angled_line_fiber):
@@ -300,7 +303,7 @@ def get_distance(img_right, vline, line_params_chip, angled_line_fiber):
         
         return np.format_float_positional(d, precision=2), corners[distance==d].ravel()
     else:
-        return 0.0, []
+        return 'Cannot determine minimal distance', []
 
 ### Main function to yield processed image
 def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, binary, threshold):
