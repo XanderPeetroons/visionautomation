@@ -44,9 +44,18 @@ class MyWindow(QMainWindow):
         self.botline = 400
         self.midline = 350
 
+        ### Variable for binary and threshold
+        self.binary = [False, False]
+        self.threshold = [63, 135]
+
         # Initialize cropped and processed flags 
         self.drawCropped = False
         self.drawProcessed = False
+        
+        # Initialize text event 
+        self.textchangeclusterfiber = False
+        #self.textchangebinarychip = False
+        #self.textchangebinaryfiber = False
 
         ### FONT VARIABLE
         self.fontvar = QFont('Times', 16)
@@ -128,25 +137,33 @@ class MyWindow(QMainWindow):
         self.images.setMaximumHeight(int(2/3*height))
         
         self.cordet = QLabel("Corner detection: ",self)
-        self.clustfiber = QLabel("Fiber angle: ",self)
-        self.thrchip = QLabel("Binary threshold_chip: ",self)
-        self.thrfiber = QLabel("Binary threshold_fiber: ",self)
+        self.clustfiber = QLabel("Fiber angle detection (< 30): ",self)
+        self.thrchip = QLabel("Binary threshold_chip (< 255): ",self)
+        self.thrfiber = QLabel("Binary threshold_fiber (< 250): ",self)
         
         self.alpha1label = QLabel("Angle between chip and vertical axis: ",self)
         self.alpha2label = QLabel("Angle between fiber and horizontal axis: ",self)
         self.tethalabel = QLabel("Angle between chip and fiber: ",self)
       
+        self.alpha1value = QLabel(self)
+        self.alpha2value = QLabel(self)
+        self.tethavalue = QLabel(self)
+
         # INPUT TEXT
         self.cornerf = QLineEdit(self)
+        #self.cornerf.textChanged.connect(self.fibercorner)
         self.cornerf.setMaximumWidth(200)
 
         self.fiber = QLineEdit(self)
+        self.fiber.textChanged.connect(self.clusterfiber)
         self.fiber.setMaximumWidth(200)
 
         self.contourc = QLineEdit(self)
+        self.contourc.textChanged.connect(self.binarychip)
         self.contourc.setMaximumWidth(200)
 
         self.contourf = QLineEdit(self)
+        self.contourf.textChanged.connect(self.binaryfiber)
         self.contourf.setMaximumWidth(200)
         
         # BUTTONS
@@ -221,22 +238,26 @@ class MyWindow(QMainWindow):
         layout.addWidget(self.bprocess, 3, 1)   
 
         ## Text
-        layout.addWidget(self.cordet, 1, 3)
-        layout.addWidget(self.clustfiber, 2, 3)
-        layout.addWidget(self.thrchip, 3, 3)
-        layout.addWidget(self.thrfiber, 4, 3)
-
+        layout.addWidget(self.thrchip, 1, 3)
+        layout.addWidget(self.thrfiber, 2, 3)
+        layout.addWidget(self.clustfiber, 3, 3)
+        layout.addWidget(self.cordet, 4, 3)
+        
         ## Input parameters
-        layout.addWidget(self.cornerf, 1, 4)
-        layout.addWidget(self.fiber, 2, 4)
-        layout.addWidget(self.contourc, 3, 4)
-        layout.addWidget(self.contourf, 4, 4)
+        layout.addWidget(self.contourc, 1, 4)
+        layout.addWidget(self.contourf, 2, 4)
+        layout.addWidget(self.fiber, 3, 4)
+        layout.addWidget(self.cornerf, 4, 4)
 
         ## Results
         layout.addWidget(self.alpha1label, 1, 6)
         layout.addWidget(self.alpha2label, 2, 6)
         layout.addWidget(self.tethalabel, 3, 6)
 
+        layout.addWidget(self.alpha1value, 1, 7)
+        layout.addWidget(self.alpha2value, 2, 7)
+        layout.addWidget(self.tethavalue, 3, 7)
+            
         self.centralWidget = QWidget() 
         self.centralWidget.setLayout(layout)
         self.setCentralWidget(self.centralWidget)
@@ -306,8 +327,8 @@ class MyWindow(QMainWindow):
             self.pixmapcroppedimage = self.pixmapcroppedimage.scaled(int(800/3240*width), int(800/2160*height), Qt.KeepAspectRatio)
             painter.drawPixmap(int(1200/3240*width),int(200/2160*height),int(800/3240*width),int(800/2160*height), self.pixmapcroppedimage)
             
-            # Return draw cropped flag to False
-            self.drawCropped = False
+            # Return draw cropped flag to False: remove otherwise plot disappear
+            # self.drawCropped = False 
 
         """ Processed image drawing with painter """
         if self.drawProcessed:
@@ -317,19 +338,26 @@ class MyWindow(QMainWindow):
             pxlmidline = int(self.midline/800*size[1])
             pxltopline = int(self.topline/800*size[0])
             pxlbotline = int(self.botline/800*size[0])
-            nb_cluster_components = [5,5]
-            processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, nb_cluster_components)
+            if self.textchangeclusterfiber == False:
+                self.nb_cluster_components = [5,5]
+            processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, self.nb_cluster_components, self.binary, self.threshold)
 
             # Save image
             cv.imwrite('Photos/Processed/Processed.jpg', processed_image[0])
 
-
+            # Show image
             self.pixmapprocessedimage = QPixmap('Photos/Processed/Processed.jpg')
             self.pixmapprocessedimage = self.pixmapprocessedimage.scaled(int(800/3240*width), int(800/2160*height), Qt.KeepAspectRatio)
             painter.drawPixmap(int(2200/3240*width),int(200/2160*height),int(800/3240*width),int(800/2160*height), self.pixmapprocessedimage)
             
             # Return draw cropped flag to False
             self.drawProcessed = False
+
+            # Print values
+            self.alpha1value.setText(str(processed_image[1]) + " " + u"\u2103")
+            self.alpha2value.setText(str(processed_image[2]) + " " + u"\u2103")
+            self.tethavalue.setText(str(processed_image[3]) + " " + "pixels")
+            
 
 
     def mousePressEvent(self,event):
@@ -421,6 +449,33 @@ class MyWindow(QMainWindow):
             self.line = int(text)
             self.updateplot()
             self.update() # painter update
+
+    def clusterfiber(self, text):
+        """ Intersection to the input pixel """
+        if text == "" or not isinstance(int(text),int):
+            print('not an integer')
+            self.textchangeclusterfiber = False
+        else: 
+            self.textchangeclusterfiber = True
+            self.nb_cluster_components = [5, int(text)]
+
+    def binarychip(self, text):
+        """ Intersection to the input pixel """
+        if text == "" or not isinstance(int(text),int):
+            print('not an integer')
+            self.binary[0] = False
+        else: 
+            self.binary[0] = True
+            self.threshold[0] = int(text)
+
+    def binaryfiber(self, text):
+        """ Intersection to the input pixel """
+        if text == "" or not isinstance(int(text),int):
+            print('not an integer')
+            self.binary[1] = False
+        else: 
+            self.binary[1] = True
+            self.threshold[1] = int(text)
 
     def clicknext(self):
         """ One picture next """

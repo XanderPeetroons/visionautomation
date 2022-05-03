@@ -74,6 +74,11 @@ def sobel_edge (blur):
     return sobelx, sobely, sobelxy
 
 ### Perform binary conversion 
+def binary_threshold (img,threshold):
+    ret, bin_image = cv.threshold(img, threshold, 255, cv.THRESH_BINARY)
+    return bin_image
+
+### Perform adaptive binary conversion 
 def adapt_thresh_bin (img,x,y):
     ret1, th1 = cv.threshold(img, 127, 255, cv.THRESH_BINARY)
     th2 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY,x,y) #number of pixels
@@ -114,7 +119,7 @@ def adapt_thresh_otsu(img):
     #th2 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY + cv.THRESH_OTSU,11,2)
     #th3 = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY + cv.THRESH_OTSU,11,2)
 
-    return th1 #, th2, th3
+    return ret1, th1 #, th2, th3
 
 
 ### Draw contour based on binary image
@@ -298,7 +303,7 @@ def get_distance(img_right, vline, line_params_chip, angled_line_fiber):
         return 0.0, []
 
 ### Main function to yield processed image
-def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components):
+def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, binary, threshold):
     ### Step 1: Gray conversion + Smoothening
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     blur = cv.GaussianBlur(gray, (0,0), 2)
@@ -307,7 +312,11 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     img_left, img_right = img_separator (blur, vline=vline)
     
     ### Chip img processing
-    binary_chip = adapt_thresh_otsu(img_left)
+    if binary[0]:
+        binary_chip = binary_threshold(img_left, threshold[0])
+    else:
+        retc, binary_chip = adapt_thresh_otsu(img_left)   
+        #print( "{} {}".format(binary_chip,retc) )        
     contour_chip = get_contours(binary_chip)
     angled_line_chip, line_params_chip, _, _ = get_axial_line(contour_chip, True, 'last', 20, cluster_n_components[0])
     
@@ -317,7 +326,11 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     else:
         contrast_enhanced_fiber = img_right.copy()
     
-    binary_fiber = adapt_thresh_otsu(contrast_enhanced_fiber)
+    if binary[1]:
+        binary_fiber = binary_threshold(contrast_enhanced_fiber, threshold[1])
+    else:
+        retf, binary_fiber = adapt_thresh_otsu(contrast_enhanced_fiber)
+        #print( "{} {}".format(binary_fiber,retf) )
     contour_fiber = get_contours(binary_fiber)
     angled_line_fiber, line_params_fiber, _, _ = get_axial_line(contour_fiber[upper_hline:lower_hline,:], 
         False, 'all', 20, cluster_n_components[1])
