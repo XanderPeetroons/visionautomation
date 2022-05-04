@@ -306,7 +306,7 @@ def get_distance(img_right, vline, line_params_chip, angled_line_fiber, quality)
         return 'Cannot determine minimal distance', []
 
 ### Main function to yield processed image
-def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, binary, threshold, quality):
+def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, binary, threshold, quality=1):
     ### Step 1: Gray conversion + Smoothening
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     blur = cv.GaussianBlur(gray, (0,0), 2)
