@@ -13,12 +13,14 @@ import time
 
 directory = 'Photos/'
 photos = os.listdir(directory)
+print(photos)
 
 i=0
 while i < len(photos):
-    if '.' in photos[i]:
+    if photos[i]==".DS_Store" or photos[i] == "Processed":
         del photos[i] # Delete all invisible files like /.DS_Store
-    i +=1
+    else:
+        i +=1
 
 ### Img directory
 nb_pic = 0
@@ -44,9 +46,18 @@ class MyWindow(QMainWindow):
         self.botline = 400
         self.midline = 350
 
+        ### Variable for binary and threshold
+        self.binary = [False, False]
+        self.threshold = [63, 135]
+
         # Initialize cropped and processed flags 
         self.drawCropped = False
         self.drawProcessed = False
+        
+        # Initialize text event 
+        self.textchangeclusterfiber = False
+        #self.textchangebinarychip = False
+        #self.textchangebinaryfiber = False
 
         ### FONT VARIABLE
         self.fontvar = QFont('Times', 16)
@@ -74,11 +85,15 @@ class MyWindow(QMainWindow):
         """
         2: TOP MIDDLE: CROPPED IMAGE TO AREA OF INTEREST
         """
+        self.textimage = QLabel(self)
+        self.textimage.setText("Crop Image")
+        self.textimage.setFont(self.fontvar)
+        self.textimage.setGeometry(int(1450/3240*width),int(50/2160*height), int(1000/3240*width),int(100/2160*height))
 
         self.textimage = QLabel(self)
         self.textimage.setText("Processed Image")
         self.textimage.setFont(self.fontvar)
-        self.textimage.setGeometry(int(960/3240*width),int(50/2160*height), int(1000/3240*width),int(100/2160*height))
+        self.textimage.setGeometry(int(2500/3240*width),int(50/2160*height), int(1000/3240*width),int(100/2160*height))
 
         """
         4: BOT LEFT: BUTTONS FOR ACTIVATION
@@ -119,18 +134,52 @@ class MyWindow(QMainWindow):
         """
         TOOLS
         """
+        # LABELS
+        self.images = QLabel(self)
+        self.images.setMaximumHeight(int(1/2*height))
+        
+        self.cordet = QLabel("Corner detection: ",self)
+        self.clustfiber = QLabel("Fiber angle detection (< 30): ",self)
+        self.thrchip = QLabel("Binary threshold_chip (< 255): ",self)
+        self.thrfiber = QLabel("Binary threshold_fiber (< 250): ",self)
+        
+        self.alpha1label = QLabel("Angle between chip and vertical axis: ",self)
+        self.alpha2label = QLabel("Angle between fiber and horizontal axis: ",self)
+        self.tethalabel = QLabel("Angle between chip and fiber: ",self)
+      
+        self.alpha1value = QLabel(self)
+        self.alpha2value = QLabel(self)
+        self.tethavalue = QLabel(self)
+
+        # INPUT TEXT
+        self.cornerf = QLineEdit(self)
+        #self.cornerf.textChanged.connect(self.fibercorner)
+        self.cornerf.setMaximumWidth(200)
+
+        self.fiber = QLineEdit(self)
+        self.fiber.textChanged.connect(self.clusterfiber)
+        self.fiber.setMaximumWidth(200)
+
+        self.contourc = QLineEdit(self)
+        self.contourc.textChanged.connect(self.binarychip)
+        self.contourc.setMaximumWidth(200)
+
+        self.contourf = QLineEdit(self)
+        self.contourf.textChanged.connect(self.binaryfiber)
+        self.contourf.setMaximumWidth(200)
+        
         # BUTTONS
-        self.bup = QPushButton(self)
-        self.bup.setText("up")
-        self.bup.clicked.connect(self.clickdown)
-        self.bup.setMaximumSize(int(120/3240*width),int(40/2160*height))
+        
+        self.bleft = QPushButton(self)
+        self.bleft.setText("Left")
+        #self.bleft.clicked.connect(self.clickleft)
+        self.bleft.setMaximumSize(int(180/3240*width),int(80/2160*height))
         # self.bup.move(1600,430)
 
-        self.bdown = QPushButton(self)
-        self.bdown.setText("down")
-        self.bdown.clicked.connect(self.clickup)
-        self.bdown.setMaximumSize(int(120/3240*width),int(40/2160*height))
-        # self.bdown.move(1600,550)
+        self.bright = QPushButton(self)
+        self.bright.setText("Right")
+        #self.bright.clicked.connect(self.clickright)
+        self.bright.setMaximumSize(int(180/3240*width),int(80/2160*height))
 
         self.textline = QLineEdit()
         self.textline.textChanged.connect(self.textchanged)
@@ -148,26 +197,51 @@ class MyWindow(QMainWindow):
         self.textparameter.setMaximumSize(int(120/3240*width),int(40/2160*height))
         self.textparameter.setGeometry(int(2000/3240*width),int(490/2160*height),int(120/3240*width),int(40/2160*height))
 
-        """ 
-        PLOT
-        """
-        # Initialize Axes
-        # self.insert_ax()
-
-        # Get the picture information and store
-        
-        # Max value for self.line 
-        # self.maxyvalue = self.processed.shape[0]
-        
-        # Define First rectangle for green bar
-        # self.greenbar = QRect(int(780/3240*width),int((200+(self.line/self.maxyvalue*700))/2160*height-2),int(740/3240*width),5)
-
-
         """
         LAY OUT
         """
+        # Creating a grid of 5x7: first row is half of the windows, then buttons, 
+        # texts and input parameters are in an specific position
         
+        layout = QGridLayout()
+        
+        layout.addWidget(self.images, 0, 0, 1, 7) ## label covering half of window
+        
+        layout.addWidget(self.bnext, 1, 0)
+        layout.setRowStretch(1,2)
 
+        ## Button
+        layout.addWidget(self.bleft, 3, 0)
+        layout.addWidget(self.bright, 4, 0)
+        layout.addWidget(self.bcrop, 3, 1)
+        layout.addWidget(self.bprocess, 4, 1)   
+
+        ## Text
+        layout.addWidget(self.thrchip, 2, 3)
+        layout.addWidget(self.thrfiber, 3, 3)
+        layout.addWidget(self.clustfiber, 4, 3)
+        layout.addWidget(self.cordet, 5, 3)
+        
+        ## Input parameters
+        layout.addWidget(self.contourc, 2, 4)
+        layout.addWidget(self.contourf, 3, 4)
+        layout.addWidget(self.fiber, 4, 4)
+        layout.addWidget(self.cornerf, 5, 4)
+
+        ## Results
+        layout.addWidget(self.alpha1label, 2, 6)
+        layout.addWidget(self.alpha2label, 3, 6)
+        layout.addWidget(self.tethalabel, 4, 6)
+
+        layout.addWidget(self.alpha1value, 1, 7)
+        layout.addWidget(self.alpha2value, 2, 7)
+        layout.addWidget(self.tethavalue, 3, 7)
+            
+        self.centralWidget = QWidget() 
+        self.centralWidget.setLayout(layout)
+        self.setCentralWidget(self.centralWidget)
+
+        ''' 
         vboxbuttons = QVBoxLayout()
         vboxbuttons.addWidget(self.bcrop)
         vboxbuttons.addWidget(self.bprocess)
@@ -185,7 +259,7 @@ class MyWindow(QMainWindow):
         self.centralWidget = QWidget()
         self.centralWidget.setLayout(vbox)
         self.setCentralWidget(self.centralWidget)
-
+        '''
     """
     LINE ON IMAGE
     """
@@ -230,10 +304,10 @@ class MyWindow(QMainWindow):
 
             self.pixmapcroppedimage = QPixmap('Photos/Processed/Cropped.jpg')
             self.pixmapcroppedimage = self.pixmapcroppedimage.scaled(int(800/3240*width), int(800/2160*height), Qt.KeepAspectRatio)
-            painter.drawPixmap(int(1000/3240*width),int(200/2160*height),int(800/3240*width),int(800/2160*height), self.pixmapcroppedimage)
+            painter.drawPixmap(int(1200/3240*width),int(200/2160*height),int(800/3240*width),int(800/2160*height), self.pixmapcroppedimage)
             
-            # Return draw cropped flag to False
-            self.drawCropped = False
+            # Return draw cropped flag to False: remove otherwise plot disappear
+            # self.drawCropped = False 
 
         """ Processed image drawing with painter """
         if self.drawProcessed:
@@ -243,19 +317,26 @@ class MyWindow(QMainWindow):
             pxlmidline = int(self.midline/800*size[1])
             pxltopline = int(self.topline/800*size[0])
             pxlbotline = int(self.botline/800*size[0])
-            nb_cluster_components = [5,5]
-            processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, nb_cluster_components)
+            if self.textchangeclusterfiber == False:
+                self.nb_cluster_components = [5,5]
+            processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, self.nb_cluster_components, self.binary, self.threshold)
 
             # Save image
             cv.imwrite('Photos/Processed/Processed.jpg', processed_image[0])
 
-
+            # Show image
             self.pixmapprocessedimage = QPixmap('Photos/Processed/Processed.jpg')
             self.pixmapprocessedimage = self.pixmapprocessedimage.scaled(int(800/3240*width), int(800/2160*height), Qt.KeepAspectRatio)
-            painter.drawPixmap(int(2000/3240*width),int(200/2160*height),int(800/3240*width),int(800/2160*height), self.pixmapprocessedimage)
+            painter.drawPixmap(int(2200/3240*width),int(200/2160*height),int(800/3240*width),int(800/2160*height), self.pixmapprocessedimage)
             
-            # Return draw cropped flag to False
+            # Return draw processed flag to False
             self.drawProcessed = False
+
+            # Print values
+            self.alpha1value.setText(str(processed_image[1]) + " " + u"\u2103")
+            self.alpha2value.setText(str(processed_image[2]) + " " + u"\u2103")
+            self.tethavalue.setText(str(processed_image[3]) + " " + "pixels")
+            
 
 
     def mousePressEvent(self,event):
@@ -309,24 +390,7 @@ class MyWindow(QMainWindow):
         self.ax.set_xlabel('Pixel')
         self.ax.set_ylim([-5,260])
         self.graph, self.graphx = None, None
-
-    def plot(self):
-        processed = self.processed
-        peaks = get_peaks(processed, self.line)
-
-        self.figure = Figure()
-        self.canvas = FigureCanvasQTAgg(self.figure)
-
-        # Maybe change to ax as input var for function?
-        self.ax = self.figure.add_subplot(111)
-        self.graph = self.ax.plot(peaks, processed[self.line,:][peaks], "x", c="red")
-        self.graphx = self.ax.plot(range(0,processed.shape[1]), processed[self.line,:])
-        self.ax.set_title('Profiling of grayscale along the line')
-        self.ax.set_ylabel('Grayscale intensity')
-        self.ax.set_xlabel('Pixel')
-        self.ax.set_ylim([-5,260])
-        self.canvas.resize(1000,1000) 
-
+        
     def clickup(self):
         """ One pixel up """
         self.line += 1
@@ -348,6 +412,33 @@ class MyWindow(QMainWindow):
             self.updateplot()
             self.update() # painter update
 
+    def clusterfiber(self, text):
+        """ Intersection to the input pixel """
+        if text == "" or not isinstance(int(text),int):
+            print('not an integer')
+            self.textchangeclusterfiber = False
+        else: 
+            self.textchangeclusterfiber = True
+            self.nb_cluster_components = [5, int(text)]
+
+    def binarychip(self, text):
+        """ Intersection to the input pixel """
+        if text == "" or not isinstance(int(text),int):
+            print('not an integer')
+            self.binary[0] = False
+        else: 
+            self.binary[0] = True
+            self.threshold[0] = int(text)
+
+    def binaryfiber(self, text):
+        """ Intersection to the input pixel """
+        if text == "" or not isinstance(int(text),int):
+            print('not an integer')
+            self.binary[1] = False
+        else: 
+            self.binary[1] = True
+            self.threshold[1] = int(text)
+
     def clicknext(self):
         """ One picture next """
         global nb_pic 
@@ -355,6 +446,9 @@ class MyWindow(QMainWindow):
 
         print('here')
         nb_pic += 1
+        if nb_pic == len(photos):
+            nb_pic = 0
+        
         img_dir = 'Photos/' + photos[nb_pic]
         self.newimage = True
         self.initUI()
