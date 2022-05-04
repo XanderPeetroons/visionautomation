@@ -225,7 +225,6 @@ def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_co
 
     clustering = GaussianMixture(n_components=n_components)
     X = np.array([[i,j] for i,j in zip(data[0], data[1])])
-    print('shape',X.shape)
     labels = clustering.fit_predict(X)
     min_std = 1.0
     r = 0.0

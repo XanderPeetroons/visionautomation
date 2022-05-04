@@ -1,4 +1,5 @@
 
+from pathlib import Path
 from turtle import width
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -11,20 +12,6 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 import os
 import time
 
-directory = 'Photos/'
-photos = os.listdir(directory)
-print(photos)
-
-i=0
-while i < len(photos):
-    if photos[i]==".DS_Store" or photos[i] == "Processed":
-        del photos[i] # Delete all invisible files like /.DS_Store
-    else:
-        i +=1
-
-### Img directory
-nb_pic = 0
-img_dir = 'Photos/' + photos[nb_pic]
 
 
 class MyWindow(QMainWindow):
@@ -35,11 +22,15 @@ class MyWindow(QMainWindow):
         # self.setGeometry(0,0,4000,2000)
         self.setWindowTitle("GUI")
         self.newimage = False
+        self.folderAlreadySelected = False
         self.initUI()
 
 
     def initUI(self):
-        global img_dir
+        
+        if not self.folderAlreadySelected:
+            self.setUpFolder()
+
 
         ### Variable for horizontal pixel
         self.topline = 200 # between 0 and 800
@@ -62,7 +53,6 @@ class MyWindow(QMainWindow):
         ### FONT VARIABLE
         self.fontvar = QFont('Times', 16)
         self.fontvar.setBold(True)
-        print('again', img_dir,nb_pic)
 
 
         """
@@ -111,7 +101,7 @@ class MyWindow(QMainWindow):
 
         ### PROCESSED IMAGE gets drawn by painter 
 
-        img = get_array(img_dir)
+        img = get_array(self.img_dir)
 	    ### Processed array now will include contour
         # self.processed = get_processed_array(img) 
         # cv.imwrite('Photos/Processed_10X.jpg', processed_array)
@@ -172,13 +162,13 @@ class MyWindow(QMainWindow):
         
         self.bleft = QPushButton(self)
         self.bleft.setText("Left")
-        #self.bleft.clicked.connect(self.clickleft)
+        self.bleft.clicked.connect(self.clickleft)
         self.bleft.setMaximumSize(int(180/3240*width),int(80/2160*height))
         # self.bup.move(1600,430)
 
         self.bright = QPushButton(self)
         self.bright.setText("Right")
-        #self.bright.clicked.connect(self.clickright)
+        self.bright.clicked.connect(self.clickright)
         self.bright.setMaximumSize(int(180/3240*width),int(80/2160*height))
 
         self.textline = QLineEdit()
@@ -197,6 +187,11 @@ class MyWindow(QMainWindow):
         self.textparameter.setMaximumSize(int(120/3240*width),int(40/2160*height))
         self.textparameter.setGeometry(int(2000/3240*width),int(490/2160*height),int(120/3240*width),int(40/2160*height))
 
+        self.bbrowse = QPushButton(self)
+        self.bbrowse.setText("Select")
+        self.bbrowse.clicked.connect(self.browse)
+        self.bbrowse.setMaximumSize(int(180/3240*width),int(80/2160*height))
+
         """
         LAY OUT
         """
@@ -209,6 +204,7 @@ class MyWindow(QMainWindow):
         
         layout.addWidget(self.bnext, 1, 0)
         layout.setRowStretch(1,2)
+        layout.addWidget(self.bbrowse ,1,1)
 
         ## Button
         layout.addWidget(self.bleft, 3, 0)
@@ -267,7 +263,7 @@ class MyWindow(QMainWindow):
         painter = QPainter(self)
 
         """ Camera image """
-        self.pixmapcameraimage = QPixmap(img_dir)
+        self.pixmapcameraimage = QPixmap(self.img_dir)
         self.pixmapcameraimage = self.pixmapcameraimage.scaled(int(800/3240*width), int(800/2160*height), Qt.KeepAspectRatio)
         painter.drawPixmap(int(50/3240*width),int(200/2160*height),int(800/3240*width),int(800/2160*height), self.pixmapcameraimage)
 
@@ -291,7 +287,7 @@ class MyWindow(QMainWindow):
 
         """ Cropped image drawing with painter"""
         if self.drawCropped:
-            img = get_array(img_dir)
+            img = get_array(self.img_dir)
             size = img.shape
             # Convert gui scale to pixel value in array
             pxlmidline = int(self.midline/800*size[1])
@@ -311,7 +307,7 @@ class MyWindow(QMainWindow):
 
         """ Processed image drawing with painter """
         if self.drawProcessed:
-            img = get_array(img_dir)
+            img = get_array(self.img_dir)
             size = img.shape
             # Convert gui scale to pixel value in array
             pxlmidline = int(self.midline/800*size[1])
@@ -378,26 +374,14 @@ class MyWindow(QMainWindow):
         self.drawProcessed = True
         self.update() # painter update
 
-
-    def insert_ax(self):
-        self.figure = Figure()
-        self.canvas = FigureCanvasQTAgg(self.figure)
-
-        # Maybe change to ax as input var for function?
-        self.ax = self.figure.add_subplot(111)
-        self.ax.set_title('Profiling of grayscale along the line')
-        self.ax.set_ylabel('Grayscale intensity')
-        self.ax.set_xlabel('Pixel')
-        self.ax.set_ylim([-5,260])
-        self.graph, self.graphx = None, None
         
-    def clickup(self):
+    def clickleft(self):
         """ One pixel up """
         self.line += 1
         self.updateplot()
         self.update() # painter update
 
-    def clickdown(self):
+    def clickright(self):
         """ One pixel down """
         self.line -= 1
         self.updateplot()
@@ -441,39 +425,55 @@ class MyWindow(QMainWindow):
 
     def clicknext(self):
         """ One picture next """
-        global nb_pic 
-        global img_dir
 
-        print('here')
-        nb_pic += 1
-        if nb_pic == len(photos):
-            nb_pic = 0
+        self.nb_pic += 1
+        if self.nb_pic == len(self.photos):
+            self.nb_pic = 0
         
-        img_dir = 'Photos/' + photos[nb_pic]
+        self.img_dir = self.directory + self.photos[self.nb_pic]
         self.newimage = True
         self.initUI()
+
+    def browse(self):
+        """ browse in directories to select photos folder """
+        
+        filename = QFileDialog.getExistingDirectory()
+        self.directory = filename + '/'
+
+        self.photos = os.listdir(self.directory)
+        print(self.photos)
+
+        i=0
+        while i < len(self.photos):
+            if self.photos[i]==".DS_Store" or self.photos[i] == "Processed":
+                del self.photos[i] # Delete all invisible files like /.DS_Store
+            else:
+                i +=1
+
+        ### Img directory
+        self.nb_pic = 0
+        self.img_dir = 'Photos/' + self.photos[self.nb_pic]
+        self.folderAlreadySelected = True
+
+    def setUpFolder(self):
+        self.directory = 'Photos/'
+        self.photos = os.listdir(self.directory)
+        print(self.photos)
+
+        i=0
+        while i < len(self.photos):
+            if self.photos[i]==".DS_Store" or self.photos[i] == "Processed":
+                del self.photos[i] # Delete all invisible files like /.DS_Store
+            else:
+                i +=1
+
+        ### Img directory
+        self.nb_pic = 0
+        self.img_dir = 'Photos/' + self.photos[self.nb_pic]
+
         
             
 
-    def updateplot(self):
-        value = self.line
-        processed = self.processed
-        peaks = get_peaks(processed, self.line)
-        try: 
-            value = float(value)
-        except ValueError:
-            value = 250
-
-        # Renew graph
-        if self.graphx:
-            line = self.graph.pop(0)
-            line.remove()
-            line = self.graphx.pop(0)
-            line.remove()
-        
-        self.graph = self.ax.plot(peaks, processed[self.line,:][peaks], "x", c="red")
-        self.graphx = self.ax.plot(range(0,processed.shape[1]), processed[self.line,:])
-        self.canvas.draw()
 
       
 
@@ -483,7 +483,6 @@ if __name__ == "__main__":
     # Standardize pixel positions using monitor resolution
     screen_rect = app.desktop().screenGeometry()
     width, height = screen_rect.width(), screen_rect.height()
-    print(width,height)
 
     win = MyWindow()
     win.showMaximized()
