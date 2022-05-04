@@ -183,7 +183,7 @@ def add_text(img, text):
 def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_components=2):
     ### Peak position (from left to right or top to bottom): first, last or all
     ### Step: sampling the pixel (get 1 peak for every "step" pixel)
-    ### No. of components: parameter for Gaussian Mixture,
+    ### No. of components: parameter for Gaussian Mixture => tunable parameter
     ### If peak_position is either 'first' or 'last', n_components shoule be 2, else 6
     
     coord_data = []
@@ -274,7 +274,7 @@ def get_angle(slope1, slope2):
 def get_distance(img_right, vline, line_params_chip, angled_line_fiber, quality):
     ### Corner detection:
     ### Maximum number of corners to return. If there are more corners than are found, the strongest of them is returned.
-    ### Parameter characterizing the minimal accepted quality of image corners.
+    ### Parameter characterizing the minimal accepted quality of image corners => tunable parameter
     ### Minimum possible Euclidean distance between the returned corners.
     ### Size of an average block for computing a derivative covariation matrix over each pixel neighborhood/
 
@@ -291,7 +291,7 @@ def get_distance(img_right, vline, line_params_chip, angled_line_fiber, quality)
     slope = line_params_chip[0]
     intercept = line_params_chip[1]
 
-    if corners is not None:
+    if (corners is not None) and (slope is not None):
         corners = corners.reshape(-1,2)
         corners[:,0] = corners[:,0]+vline # shift the x-value by vline
         distance = []
@@ -305,7 +305,7 @@ def get_distance(img_right, vline, line_params_chip, angled_line_fiber, quality)
         return 'Cannot determine minimal distance', []
 
 ### Main function to yield processed image
-def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, binary, threshold, quality=1):
+def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, binary, threshold, quality=0.1):
     ### Step 1: Gray conversion + Smoothening
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     blur = cv.GaussianBlur(gray, (0,0), 2)
@@ -358,9 +358,8 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     # processed = img_join(contour_chip[lower_hline:upper_hline,:], contour_fiber[lower_hline:upper_hline,:]) # if we want to show only contour img
     processed = np.array(processed)
     ### Step 6: Draw distance
-    rad = np.arctan(line_params_chip[0])
     if len(corners) > 0:
-        
+        rad = np.arctan(line_params_chip[0])
         #processed2 = processed.copy()
         processed2 = cv.line(processed, (int(corners[0]), int(corners[1])), 
             ( int(corners[0]-np.cos(rad)*float(d)), int(corners[1]-np.sin(rad)*float(d)) ),

@@ -314,7 +314,7 @@ class MyWindow(QMainWindow):
             pxltopline = int(self.topline/800*size[0])
             pxlbotline = int(self.botline/800*size[0])
             if self.textchangeclusterfiber == False:
-                self.nb_cluster_components = [5,5]
+                self.nb_cluster_components = [5,6]
             processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, self.nb_cluster_components, self.binary, self.threshold)
 
             # Save image
