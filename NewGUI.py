@@ -44,18 +44,19 @@ class MyWindow(QMainWindow):
         self.botline = 400
         self.midline = 350
 
-        ### Variable for binary and threshold
+        ### Variable for binary and threshold and corner quality
         self.binary = [False, False]
         self.threshold = [63, 135]
         self.nb_cluster_components = [5,5]
+        self.quality = 0.2
 
         # Initialize cropped and processed flags 
         self.drawCropped = False
         self.drawProcessed = False
         
         # Initialize text event 
-        self.textchangeclusterfiber = False
-        self.textchangeclusterchip = False
+        #self.textchangeclusterfiber = False
+        #self.textchangeclusterchip = False
 
         ### FONT VARIABLE
         self.fontvar = QFont('Times', 16)
@@ -134,14 +135,14 @@ class MyWindow(QMainWindow):
         """
         # LABELS
         self.images = QLabel(self)
-        self.images.setMaximumHeight(int(2/3*height))
+        self.images.setFixedHeight(int(3/4*height))
         
         self.chip = QLabel("Chip",self)
         self.fiber = QLabel("Fiber",self)
         
         self.thresh = QLabel("Binary threshold (< 250): ",self)
-        self.clust = QLabel("Fiber angle (< 30): ",self)
-        self.cordet = QLabel("Corner detection: ",self)
+        self.clust = QLabel("Fiber angle: ",self)
+        self.cordet = QLabel("Corner detection (< 1): ",self)
         
         self.alpha1label = QLabel("Angle between chip and vertical axis: ",self)
         self.alpha2label = QLabel("Angle between fiber and horizontal axis: ",self)
@@ -153,6 +154,7 @@ class MyWindow(QMainWindow):
 
         # INPUT TEXT
         self.cornerf = QLineEdit(self)
+        self.cornerf.textChanged.connect(self.qualitycorner)
         self.cornerf.setMaximumWidth(100)
 
         self.chipvalue = QLineEdit(self)
@@ -229,12 +231,12 @@ class MyWindow(QMainWindow):
         """
         LAY OUT
         """
-        # Creating a grid of 5x7: first row is half of the windows, then buttons, 
+        # Creating a grid of 4x8: first row is half of the windows, then buttons, 
         # texts and input parameters are in an specific position
         
         layout = QGridLayout()
         
-        layout.addWidget(self.images, 0, 0, 1, 9) ## label covering half of window
+        layout.addWidget(self.images, 0, 0, 1, 8) ## label covering half of window
         
         ## Button
         layout.addWidget(self.bleft, 2, 0)
@@ -267,6 +269,7 @@ class MyWindow(QMainWindow):
         layout.addWidget(self.alpha2value, 2, 8)
         layout.addWidget(self.tethavalue, 3, 8)
             
+        layout.setRowStretch(5,10) ## for some reason, the first row goes up
         self.centralWidget = QWidget() 
         self.centralWidget.setLayout(layout)
         self.setCentralWidget(self.centralWidget)
@@ -348,7 +351,7 @@ class MyWindow(QMainWindow):
             pxltopline = int(self.topline/800*size[0])
             pxlbotline = int(self.botline/800*size[0])
 
-            processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, self.nb_cluster_components, self.binary, self.threshold)
+            processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, self.nb_cluster_components, self.binary, self.threshold, self.quality)
 
             # Save image
             cv.imwrite('Photos/Processed/Processed.jpg', processed_image[0])
@@ -460,26 +463,27 @@ class MyWindow(QMainWindow):
     def clusterchip(self, text):
         """ Intersection to the input pixel """
         if text == "" or not isinstance(int(text),int):
-            print('not an integer')
-            self.textchangeclusterchip = False
+            print('not a valid value')
+            #self.textchangeclusterchip = False
+            self.nb_cluster_components[0] = 5
         else: 
-            self.textchangeclusterchip = True
+            #self.textchangeclusterchip = True
             self.nb_cluster_components[0] = int(text)
             
     def clusterfiber(self, text):
         """ Intersection to the input pixel """
         if text == "" or not isinstance(int(text),int):
-            print('not an integer')
-            self.textchangeclusterfiber = False
+            print('not a valid value')
+            self.nb_cluster_components[1] = 5
         else: 
-            self.textchangeclusterfiber = True
             self.nb_cluster_components[1] = int(text)  
 
     def binarychip(self, text):
         """ Intersection to the input pixel """
         if text == "" or not isinstance(int(text),int):
-            print('not an integer')
+            print('not a valid value')
             self.binary[0] = False
+            self.threshold[0] = 63
         else: 
             self.binary[0] = True
             self.threshold[0] = int(text)
@@ -487,11 +491,20 @@ class MyWindow(QMainWindow):
     def binaryfiber(self, text):
         """ Intersection to the input pixel """
         if text == "" or not isinstance(int(text),int):
-            print('not an integer')
+            print('not a valid value')
             self.binary[1] = False
+            self.threshold[1] = 135
         else: 
             self.binary[1] = True
             self.threshold[1] = int(text)
+
+    def qualitycorner(self, text):
+        """ Intersection to the input pixel """
+        if text == "" or not isinstance(float(text),float):
+            print('not a valid value')
+            self.quality = 0.2
+        else: 
+            self.quality = float(text)
 
     def clicknext(self):
         """ One picture next """

@@ -272,7 +272,7 @@ def get_angle(slope1, slope2):
         return 'Cannot determine angle'
 
 ### Calculate vertical distance between point to line
-def get_distance(img_right, vline, line_params_chip, angled_line_fiber):
+def get_distance(img_right, vline, line_params_chip, angled_line_fiber, quality):
     ### Corner detection:
     ### Maximum number of corners to return. If there are more corners than are found, the strongest of them is returned.
     ### Parameter characterizing the minimal accepted quality of image corners.
@@ -283,7 +283,7 @@ def get_distance(img_right, vline, line_params_chip, angled_line_fiber):
     height = img_right.shape[0]
     cropped = img_right[:, :int(height/2)]
     feature_params = dict( maxCorners = 100,
-                       qualityLevel = 0.2,
+                       qualityLevel = quality,
                        minDistance = int(height/20),
                        blockSize = 9)
     corners = cv.goodFeaturesToTrack(cropped, **feature_params)
@@ -306,7 +306,7 @@ def get_distance(img_right, vline, line_params_chip, angled_line_fiber):
         return 'Cannot determine minimal distance', []
 
 ### Main function to yield processed image
-def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, binary, threshold):
+def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, binary, threshold, quality):
     ### Step 1: Gray conversion + Smoothening
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     blur = cv.GaussianBlur(gray, (0,0), 2)
@@ -317,10 +317,12 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     ### Chip img processing
     if binary[0]:
         binary_chip = binary_threshold(img_left, threshold[0])
+        contour_chip = get_contours(binary_chip)
     else:
-        retc, binary_chip = adapt_thresh_otsu(img_left)   
+        contour_chip = canny_edge(img_left)
+        #retc, binary_chip = adapt_thresh_otsu(img_left)   
         #print( "{} {}".format(binary_chip,retc) )        
-    contour_chip = get_contours(binary_chip)
+    
     angled_line_chip, line_params_chip, _, _ = get_axial_line(contour_chip, True, 'last', 20, cluster_n_components[0])
     
     ### Fiber img processing
@@ -350,7 +352,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     """
 
     ### Step 4: Detect corners and calculate vertical distance (to chip edge)
-    d, corners = get_distance(img_right[upper_hline:lower_hline,:], vline, line_params_chip, angled_line_fiber)
+    d, corners = get_distance(img_right[upper_hline:lower_hline,:], vline, line_params_chip, angled_line_fiber, quality)
 
     ### Step 5: Join image and return angle value
     processed = img_join(angled_line_chip[upper_hline:lower_hline,:], angled_line_fiber) # if we want to show angled line img
