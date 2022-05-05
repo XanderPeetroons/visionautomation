@@ -132,11 +132,13 @@ class MyWindow(QMainWindow):
         
         self.alpha1label = QLabel("Angle between chip and vertical axis: ",self)
         self.alpha2label = QLabel("Angle between fiber and horizontal axis: ",self)
-        self.tethalabel = QLabel("Distance between chip and fiber: ",self)
+        self.tethalabel = QLabel("Distance between chip and fiber using corner detection: ",self)
+        self.dlinelabel = QLabel("Distance between chip and fiber using horizontal line: ",self)
       
         self.alpha1value = QLabel(self)
         self.alpha2value = QLabel(self)
         self.tethavalue = QLabel(self)
+        self.dlinevalue = QLabel(self)
 
         # INPUT TEXT
         self.cornerf = QLineEdit(self)
@@ -225,10 +227,12 @@ class MyWindow(QMainWindow):
         layout.addWidget(self.alpha1label, 2, 6)
         layout.addWidget(self.alpha2label, 3, 6)
         layout.addWidget(self.tethalabel, 4, 6)
+        layout.addWidget(self.dlinelabel, 5, 6)
 
         layout.addWidget(self.alpha1value, 2, 7)
         layout.addWidget(self.alpha2value, 3, 7)
         layout.addWidget(self.tethavalue, 4, 7)
+        layout.addWidget(self.dlinevalue, 5, 7)
             
         self.centralWidget = QWidget() 
         self.centralWidget.setLayout(layout)
@@ -329,6 +333,7 @@ class MyWindow(QMainWindow):
             self.alpha1value.setText(str(processed_image[1]) + " " + u"\u2103")
             self.alpha2value.setText(str(processed_image[2]) + " " + u"\u2103")
             self.tethavalue.setText(str(processed_image[3]) + " " + "pixels")
+            self.dlinevalue.setText(str(int(processed_image[5]*100)/100) + " " + "pixels")
             
 
 

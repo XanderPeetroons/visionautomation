@@ -229,6 +229,8 @@ def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_co
     min_std = 1.0
     r = 0.0
     line_params = [None, None]
+    std_thresh = 0.2
+    good_labels = []
 
     for j in set(labels):
         xy = X[labels == j]
@@ -239,6 +241,9 @@ def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_co
                 min_std = std_err
                 r = r_value
                 line_params = [slope, intercept]
+            if std_err <= std_thresh:
+                good_labels.append(j)
+
                 
     if None not in line_params:
         x_min = np.array([data[0]]).min()
@@ -258,7 +263,7 @@ def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_co
             cv.line(imgLine, (x_min, int(slope*x_min+y_mean)), (x_max, int(slope*x_max+y_mean)),
                 (255, 0, 0), thickness=6, lineType=cv.LINE_AA)
               
-        return imgLine, line_params, X, labels
+        return imgLine, line_params, X, labels, good_labels
     else:
         return img, line_params, X, labels
 
@@ -304,6 +309,31 @@ def get_distance(img_right, vline, line_params_chip, angled_line_fiber, quality)
     else:
         return 'Cannot determine minimal distance', []
 
+def get_distance_from_horizontal_lines(img_right, vline, line_params_chip, X, labels, good_labels):
+    """ Calculate distance using left most points on the obtained horizontal lines """
+
+    slope = line_params_chip[0]
+    intercept = line_params_chip[1]
+
+    ycoord = []
+    xcoord = []
+    for j in good_labels:
+        coord = X[labels==j]
+        argminima = np.argmin(coord,0)
+        ycoord.append(coord[argminima[0]][1])
+        xcoord.append(coord[argminima[0]][0]+vline)
+
+    distance = []
+    for x, y in zip(xcoord, ycoord):
+        distance.append(abs(-x +slope*y + intercept) / math.sqrt(slope*slope + 1) )
+    d = min(distance)
+
+    xcoord = np.array(xcoord)
+    ycoord = np.array(ycoord)
+    coord = [xcoord[distance == d], ycoord[distance == d]]
+
+    return d, coord
+
 ### Main function to yield processed image
 def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, binary, threshold, quality=0.1):
     ### Step 1: Gray conversion + Smoothening
@@ -311,7 +341,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     blur = cv.GaussianBlur(gray, (0,0), 2)
 
     ### Step 2: Image separation and processing
-    img_left, img_right = img_separator (blur, vline=vline)
+    img_left, img_right = img_separator(blur, vline=vline)
     
     ### Chip img processing
     if binary[0]:
@@ -322,7 +352,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
         #retc, binary_chip = adapt_thresh_otsu(img_left)   
         #print( "{} {}".format(binary_chip,retc) )        
     
-    angled_line_chip, line_params_chip, _, _ = get_axial_line(contour_chip, True, 'last', 20, cluster_n_components[0])
+    angled_line_chip, line_params_chip, _, _, _ = get_axial_line(contour_chip, True, 'last', 20, cluster_n_components[0])
     
     ### Fiber img processing
     if background_profiler(img_right) >= 150:
@@ -336,7 +366,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
         retf, binary_fiber = adapt_thresh_otsu(contrast_enhanced_fiber)
         #print( "{} {}".format(binary_fiber,retf) )
     contour_fiber = get_contours(binary_fiber)
-    angled_line_fiber, line_params_fiber, _, _ = get_axial_line(contour_fiber[upper_hline:lower_hline,:], 
+    angled_line_fiber, line_params_fiber, X, labels, good_labels  = get_axial_line(contour_fiber[upper_hline:lower_hline,:], 
         False, 'all', 20, cluster_n_components[1])
     
     ### Step 3: Calculate angle alpha 1 (between chip edge and vline) and alpha 2 (between chip edge and fiber axis)
@@ -351,7 +381,8 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     """
 
     ### Step 4: Detect corners and calculate vertical distance (to chip edge)
-    d, corners = get_distance(img_right[upper_hline:lower_hline,:], vline, line_params_chip, angled_line_fiber, quality)
+    distancecorner, corners = get_distance(img_right[upper_hline:lower_hline,:], vline, line_params_chip, angled_line_fiber, quality)
+    distanceline, coord = get_distance_from_horizontal_lines(img_right[upper_hline:lower_hline,:], vline, line_params_chip, X, labels, good_labels)
 
     ### Step 5: Join image and return angle value
     processed = img_join(angled_line_chip[upper_hline:lower_hline,:], angled_line_fiber) # if we want to show angled line img
@@ -362,14 +393,21 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
         rad = np.arctan(line_params_chip[0])
         #processed2 = processed.copy()
         processed2 = cv.line(processed, (int(corners[0]), int(corners[1])), 
-            ( int(corners[0]-np.cos(rad)*float(d)), int(corners[1]-np.sin(rad)*float(d)) ),
-                (255, 0, 0), thickness=6, lineType=cv.LINE_AA)
+            ( int(corners[0]-np.cos(rad)*float(distancecorner)), int(corners[1]-np.sin(rad)*float(distancecorner)) ),
+                (255, 0, 0), thickness=5, lineType=cv.LINE_AA)
     else:
         processed2 = processed.copy()
 
+    if len(good_labels) > 0:
+        rad = np.arctan(line_params_chip[0])
+        #processed2 = processed.copy()
+        processed3 = cv.line(processed2, (int(coord[0]), int(coord[1])), 
+            ( int(coord[0]-np.cos(rad)*float(distanceline)), int(coord[1]-np.sin(rad)*float(distanceline)) ),
+                (255, 0, 0), thickness=5, lineType=cv.LINE_AA)
+    else:
+        processed3 = processed2.copy()
+
     height = lower_hline-upper_hline
-    cropped = processed2[:,max(int(vline-height/2),0):min(int(vline+height/2),processed.shape[1])]
-    return cropped, alpha1, alpha2, d, corners
-
-
+    cropped = processed3[:,max(int(vline-height/2),0):min(int(vline+height/2),processed.shape[1])]
+    return cropped, alpha1, alpha2, distancecorner, corners, distanceline, coord
 
