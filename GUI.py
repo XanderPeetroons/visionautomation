@@ -1,6 +1,3 @@
-
-from pathlib import Path
-from turtle import width
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -135,7 +132,7 @@ class MyWindow(QMainWindow):
         
         self.alpha1label = QLabel("Angle between chip and vertical axis: ",self)
         self.alpha2label = QLabel("Angle between fiber and horizontal axis: ",self)
-        self.tethalabel = QLabel("Angle between chip and fiber: ",self)
+        self.tethalabel = QLabel("Distance between chip and fiber: ",self)
       
         self.alpha1value = QLabel(self)
         self.alpha2value = QLabel(self)
@@ -229,9 +226,9 @@ class MyWindow(QMainWindow):
         layout.addWidget(self.alpha2label, 3, 6)
         layout.addWidget(self.tethalabel, 4, 6)
 
-        layout.addWidget(self.alpha1value, 1, 7)
-        layout.addWidget(self.alpha2value, 2, 7)
-        layout.addWidget(self.tethavalue, 3, 7)
+        layout.addWidget(self.alpha1value, 2, 7)
+        layout.addWidget(self.alpha2value, 3, 7)
+        layout.addWidget(self.tethavalue, 4, 7)
             
         self.centralWidget = QWidget() 
         self.centralWidget.setLayout(layout)
