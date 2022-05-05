@@ -43,11 +43,6 @@ class MyWindow(QMainWindow):
         # Initialize cropped and processed flags 
         self.drawCropped = False
         self.drawProcessed = False
-        
-        # Initialize text event 
-        self.textchangeclusterfiber = False
-        #self.textchangebinarychip = False
-        #self.textchangebinaryfiber = False
 
         ### FONT VARIABLE
         self.fontvar = QFont('Times', 16)
@@ -131,7 +126,7 @@ class MyWindow(QMainWindow):
         self.fiber = QLabel("Fiber",self)
         
         self.thresh = QLabel("Binary threshold (< 250): ",self)
-        self.clust = QLabel("Fiber angle: ",self)
+        self.clust = QLabel("Angle detection: ",self)
         self.cordet = QLabel("Corner detection (< 1): ",self)
         
         self.alpha1label = QLabel("Angle between chip and vertical axis: ",self)
@@ -327,8 +322,7 @@ class MyWindow(QMainWindow):
             pxlmidline = int(self.midline/800*size[1])
             pxltopline = int(self.topline/800*size[0])
             pxlbotline = int(self.botline/800*size[0])
-            if self.textchangeclusterfiber == False:
-                self.nb_cluster_components = [5,6]
+
             processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, self.nb_cluster_components, self.binary, self.threshold, self.quality)
 
             # Save image
@@ -412,17 +406,13 @@ class MyWindow(QMainWindow):
             self.update() # painter update
 
     def clusterchip(self, text):
-        """ Intersection to the input pixel """
         if text == "" or not isinstance(int(text),int):
             print('not a valid value')
-            #self.textchangeclusterchip = False
             self.nb_cluster_components[0] = 5
         else: 
-            #self.textchangeclusterchip = True
             self.nb_cluster_components[0] = int(text)
             
     def clusterfiber(self, text):
-        """ Intersection to the input pixel """
         if text == "" or not isinstance(int(text),int):
             print('not a valid value')
             self.nb_cluster_components[1] = 5
@@ -430,25 +420,24 @@ class MyWindow(QMainWindow):
             self.nb_cluster_components[1] = int(text)
 
     def binarychip(self, text):
-        """ Intersection to the input pixel """
         if text == "" or not isinstance(int(text),int):
             print('not an integer')
             self.binary[0] = False
+            self.threshold[0] = 63
         else: 
             self.binary[0] = True
             self.threshold[0] = int(text)
 
     def binaryfiber(self, text):
-        """ Intersection to the input pixel """
         if text == "" or not isinstance(int(text),int):
             print('not an integer')
             self.binary[1] = False
+            self.threshold[1] = 135
         else: 
             self.binary[1] = True
             self.threshold[1] = int(text)
 
     def qualitycorner(self, text):
-        """ Intersection to the input pixel """
         if text == "" or not isinstance(float(text),float):
             print('not a valid value')
             self.quality = 0.2
