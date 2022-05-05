@@ -179,7 +179,7 @@ class MyWindow(QMainWindow):
         self.bnext = QPushButton(self)
         self.bnext.setText("Next Image")
         self.bnext.clicked.connect(self.clicknext)
-        self.bnext.setMaximumSize(int(120/3240*width),int(40/2160*height))
+        self.bnext.setMaximumSize(int(180/3240*width),int(80/2160*height))
         self.bnext.setGeometry(int(2900/3240*width),int(100/2160*height),int(120/3240*width),int(40/2160*height))
 
         self.textparameter = QLineEdit()
@@ -470,6 +470,7 @@ class MyWindow(QMainWindow):
         ### Img directory
         self.nb_pic = 0
         self.img_dir = 'Photos/' + self.photos[self.nb_pic]
+        self.folderAlreadySelected = True
 
         
             
