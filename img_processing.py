@@ -309,7 +309,7 @@ def get_distance(img_right, vline, line_params_chip, angled_line_fiber, quality)
     else:
         return 'Cannot determine minimal distance', []
 
-def get_distance_from_horizontal_lines(img_right, vline, line_params_chip, X, labels, good_labels):
+def get_distance_from_horizontal_lines( vline, line_params_chip, X, labels, good_labels):
     """ Calculate distance using left most points on the obtained horizontal lines """
 
     slope = line_params_chip[0]
@@ -382,7 +382,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
 
     ### Step 4: Detect corners and calculate vertical distance (to chip edge)
     distancecorner, corners = get_distance(img_right[upper_hline:lower_hline,:], vline, line_params_chip, angled_line_fiber, quality)
-    distanceline, coord = get_distance_from_horizontal_lines(img_right[upper_hline:lower_hline,:], vline, line_params_chip, X, labels, good_labels)
+    distanceline, coord = get_distance_from_horizontal_lines(vline, line_params_chip, X, labels, good_labels)
 
     ### Step 5: Join image and return angle value
     processed = img_join(angled_line_chip[upper_hline:lower_hline,:], angled_line_fiber) # if we want to show angled line img
