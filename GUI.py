@@ -346,7 +346,7 @@ class MyWindow(QMainWindow):
             self.alpha1value.setText(str(processed_image[1]) + " " + u"\u00b0")
             self.alpha2value.setText(str(processed_image[2]) + " " + u"\u00b0")
             self.tethavalue.setText(str(processed_image[3]) + " " + "pixels")
-            self.dlinevalue.setText(str(int(processed_image[5]*100)/100) + " " + "pixels")
+            self.dlinevalue.setText(str(processed_image[5]) + " " + "pixels")
             
 
 
