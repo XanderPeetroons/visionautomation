@@ -186,6 +186,9 @@ def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_co
     ### No. of components: parameter for Gaussian Mixture => tunable parameter
     ### If peak_position is either 'first' or 'last', n_components shoule be 2, else 6
     
+    imgLine = img.copy()
+    imgLine = cv.cvtColor(imgLine, cv.COLOR_GRAY2BGR)
+
     coord_data = []
     peak_data = []
     
@@ -223,16 +226,16 @@ def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_co
     data = [[item for sublist in coord_data for item in sublist],
             [item for sublist in peak_data for item in sublist]]
 
-    clustering = GaussianMixture(n_components=n_components, random_state = 3)
-    ### All points are clustered into n_components labels using Gaussian Mixture.
-    ### Gaussian Mixture can cluster linear lines very well.
-    ### Random_state is a random seed, pass a value to have reproducible output across multiple function calls
     X = np.array([[i,j] for i,j in zip(data[0], data[1])])
     min_sample_size = 10 ### minimum no. of point to fit a line
     line_params = [None, None] ### to store slope and interception of the line
     labels = [] ### clustering label
     good_labels = [] ### clustering label of the line which is used for 2nd algo of finding distance
-    if len(X) >= (n_components + min_sample_size):
+    try: 
+        clustering = GaussianMixture(n_components=n_components, random_state = 3)
+        ### All points are clustered into n_components labels using Gaussian Mixture.
+        ### Gaussian Mixture can cluster linear lines very well.
+        ### Random_state is a random seed, pass a value to have reproducible output across multiple function calls
         labels = clustering.fit_predict(X)
         min_std = 1.0
         r = 0.0
@@ -250,30 +253,26 @@ def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_co
                 if std_err <= std_thresh:
                     good_labels.append(j)
 
-                    
-        if None not in line_params:
-            x_min = np.array([data[0]]).min()
-            x_max = np.array([data[0]]).max()
-            y_min = np.array([data[1]]).min()
-            y_max = np.array([data[1]]).max()
-            y_mean = (y_min+y_max)/2
-            imgLine = img.copy()
-            imgLine = cv.cvtColor(imgLine, cv.COLOR_GRAY2RGB)
-            slope = line_params[0]
-            intercept = line_params[1]
+        x_min = np.array([data[0]]).min()
+        x_max = np.array([data[0]]).max()
+        y_min = np.array([data[1]]).min()
+        y_max = np.array([data[1]]).max()
+        y_mean = (y_min+y_max)/2
+        
+        slope = line_params[0]
+        intercept = line_params[1]
 
-            if chip_img == True:
-                cv.line(imgLine, (int(slope*x_min+intercept), x_min), (int(slope*x_max+intercept), x_max),
-                    (0, 255, 0), thickness=6, lineType=cv.LINE_AA) ### Green
-            else:
-                cv.line(imgLine, (0, int(slope*x_min+y_mean)), (x_max, int(slope*x_max+y_mean)),
-                    (255, 0, 0), thickness=6, lineType=cv.LINE_AA) ### Red
-                  
-            return imgLine, line_params, X, labels, good_labels
+        if chip_img == True:
+            cv.line(imgLine, (int(slope*x_min+intercept), x_min), (int(slope*x_max+intercept), x_max),
+                (0, 255, 0), thickness=5, lineType=cv.LINE_AA) ### Green
         else:
-            return img, line_params, X, labels, good_labels
-    else:
-        return img, line_params, X, labels, good_labels
+            cv.line(imgLine, (0, int(slope*x_min+y_mean)), (x_max, int(slope*x_max+y_mean)),
+                (0, 0, 255), thickness=5, lineType=cv.LINE_AA) ### Red
+              
+        return imgLine, line_params, X, labels, good_labels
+    
+    except:
+        return imgLine, line_params, X, labels, good_labels
 
 ### Calculate angle between 2 lines
 def get_angle(slope1, slope2):
@@ -281,7 +280,7 @@ def get_angle(slope1, slope2):
         deg = abs(90 - np.arctan(slope1)/np.pi*180 - np.arctan(slope2)/np.pi*180)
         return np.format_float_positional(deg, precision=2)
     except:
-        return 'Cannot determine angle'
+        return 'Cannot determine'
 
 ### Calculate vertical distance between point to line
 def get_distance(img_right, vline, line_params_chip, angled_line_fiber, quality):
@@ -315,7 +314,7 @@ def get_distance(img_right, vline, line_params_chip, angled_line_fiber, quality)
         
         return np.format_float_positional(d, precision=2), corners[distance==d].ravel()
     except:
-        return 'Cannot determine minimal distance', []
+        return 'Cannot determine', []
 
 def get_distance_from_horizontal_lines( vline, line_params_chip, X, labels, good_labels):
     """ Calculate distance using left most points on the obtained horizontal lines """
@@ -345,7 +344,7 @@ def get_distance_from_horizontal_lines( vline, line_params_chip, X, labels, good
 
         return np.format_float_positional(d, precision=2), coord
     except:
-        return 'Cannot determine minimal distance', []
+        return 'Cannot determine', []
 
 ### Main function to yield processed image
 def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, binary, threshold, quality=0.1):
@@ -407,7 +406,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
         #processed2 = processed.copy()
         processed2 = cv.line(processed, (int(corners[0]), int(corners[1])), 
             ( int(corners[0]-np.cos(rad)*float(distancecorner)), int(corners[1]-np.sin(rad)*float(distancecorner)) ),
-                (173, 216, 230), thickness=5, lineType=cv.LINE_AA) ### Pink
+                (230, 216, 173), thickness=5, lineType=cv.LINE_AA) ### Light blue
     else:
         processed2 = processed.copy()
 
@@ -416,7 +415,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
         #processed2 = processed.copy()
         processed3 = cv.line(processed2, (int(coord[0]), int(coord[1])), 
             ( int(coord[0]-np.cos(rad)*float(distanceline)), int(coord[1]-np.sin(rad)*float(distanceline)) ),
-                (255, 243, 0), thickness=5, lineType=cv.LINE_AA) ### Yellow
+                (0, 243, 255), thickness=5, lineType=cv.LINE_AA) ### Yellow
     else:
         processed3 = processed2.copy()
 
