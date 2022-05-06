@@ -418,12 +418,13 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     # processed = img_join(contour_chip[lower_hline:upper_hline,:], contour_fiber[lower_hline:upper_hline,:]) # if we want to show only contour img
     processed = np.array(processed)
     ### Step 6: Draw distance
+    thickness = 5
     if len(corners) > 0:
         rad = np.arctan(line_params_chip[0])
         #processed2 = processed.copy()
         processed2 = cv.line(processed, (int(corners[0]), int(corners[1])), 
-            ( int(corners[0]-np.cos(rad)*float(distancecorner)), int(corners[1]-np.sin(rad)*float(distancecorner)) ),
-                (230, 216, 173), thickness=5, lineType=cv.LINE_AA) ### Light blue
+            ( int(corners[0]-np.cos(rad)*float(distancecorner) + thickness), int(corners[1]-np.sin(rad)*float(distancecorner) + thickness) ),
+                (230, 216, 173), thickness=thickness, lineType=cv.LINE_AA) ### Light blue
     else:
         processed2 = processed.copy()
 
@@ -431,8 +432,8 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
         rad = np.arctan(line_params_chip[0])
         #processed2 = processed.copy()
         processed3 = cv.line(processed2, (int(coord[0]), int(coord[1])), 
-            ( int(coord[0]-np.cos(rad)*float(distanceline)), int(coord[1]-np.sin(rad)*float(distanceline)) ),
-                (0, 243, 255), thickness=5, lineType=cv.LINE_AA) ### Yellow
+            ( int(coord[0]-np.cos(rad)*float(distanceline) + thickness), int(coord[1]-np.sin(rad)*float(distanceline) + thickness) ),
+                (0, 243, 255), thickness=thickness, lineType=cv.LINE_AA) ### Yellow
     else:
         processed3 = processed2.copy()
 
