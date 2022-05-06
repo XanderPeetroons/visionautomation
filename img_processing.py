@@ -223,49 +223,57 @@ def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_co
     data = [[item for sublist in coord_data for item in sublist],
             [item for sublist in peak_data for item in sublist]]
 
-    clustering = GaussianMixture(n_components=n_components)
+    clustering = GaussianMixture(n_components=n_components, random_state = 3)
+    ### All points are clustered into n_components labels using Gaussian Mixture.
+    ### Gaussian Mixture can cluster linear lines very well.
+    ### Random_state is a random seed, pass a value to have reproducible output across multiple function calls
     X = np.array([[i,j] for i,j in zip(data[0], data[1])])
-    labels = clustering.fit_predict(X)
-    min_std = 1.0
-    r = 0.0
-    line_params = [None, None]
-    std_thresh = 0.2
-    good_labels = []
+    min_sample_size = 10 ### minimum no. of point to fit a line
+    line_params = [None, None] ### to store slope and interception of the line
+    labels = [] ### clustering label
+    good_labels = [] ### clustering label of the line which is used for 2nd algo of finding distance
+    if len(X) >= (n_components + min_sample_size):
+        labels = clustering.fit_predict(X)
+        min_std = 1.0
+        r = 0.0
+        std_thresh = 0.2
+        
+        for j in set(labels):
+            xy = X[labels == j]
+            if len(xy) > min_sample_size:
+                slope, intercept, r_value, p_value, std_err = linregress(xy[:,0], xy[:,1])
+                # print(j, slope, intercept, r_value, p_value, std_err) 
+                if (std_err <= min_std) & (r_value > 0):
+                    min_std = std_err
+                    r = r_value
+                    line_params = [slope, intercept]
+                if std_err <= std_thresh:
+                    good_labels.append(j)
 
-    for j in set(labels):
-        xy = X[labels == j]
-        if len(xy) > 20:
-            slope, intercept, r_value, p_value, std_err = linregress(xy[:,0], xy[:,1])
-            # print(j, slope, intercept, r_value, p_value, std_err) 
-            if (std_err <= min_std) & (r_value > 0):
-                min_std = std_err
-                r = r_value
-                line_params = [slope, intercept]
-            if std_err <= std_thresh:
-                good_labels.append(j)
+                    
+        if None not in line_params:
+            x_min = np.array([data[0]]).min()
+            x_max = np.array([data[0]]).max()
+            y_min = np.array([data[1]]).min()
+            y_max = np.array([data[1]]).max()
+            y_mean = (y_min+y_max)/2
+            imgLine = img.copy()
+            # imgLine = cv.cvtColor(img, cv.COLOR_GRAY2RGB)
+            slope = line_params[0]
+            intercept = line_params[1]
 
-                
-    if None not in line_params:
-        x_min = np.array([data[0]]).min()
-        x_max = np.array([data[0]]).max()
-        y_min = np.array([data[1]]).min()
-        y_max = np.array([data[1]]).max()
-        y_mean = (y_min+y_max)/2
-        imgLine = img.copy()
-        # imgLine = cv.cvtColor(img, cv.COLOR_GRAY2RGB)
-        slope = line_params[0]
-        intercept = line_params[1]
-
-        if chip_img == True:
-            cv.line(imgLine, (int(slope*x_min+intercept), x_min), (int(slope*x_max+intercept), x_max),
-                (255, 0, 0), thickness=6, lineType=cv.LINE_AA)
+            if chip_img == True:
+                cv.line(imgLine, (int(slope*x_min+intercept), x_min), (int(slope*x_max+intercept), x_max),
+                    (255, 0, 0), thickness=6, lineType=cv.LINE_AA)
+            else:
+                cv.line(imgLine, (x_min, int(slope*x_min+y_mean)), (x_max, int(slope*x_max+y_mean)),
+                    (255, 0, 0), thickness=6, lineType=cv.LINE_AA)
+                  
+            return imgLine, line_params, X, labels, good_labels
         else:
-            cv.line(imgLine, (x_min, int(slope*x_min+y_mean)), (x_max, int(slope*x_max+y_mean)),
-                (255, 0, 0), thickness=6, lineType=cv.LINE_AA)
-              
-        return imgLine, line_params, X, labels, good_labels
+            return img, line_params, X, labels, good_labels
     else:
-        return img, line_params, X, labels
+        return img, line_params, X, labels, good_labels
 
 ### Calculate angle between 2 lines
 def get_angle(slope1, slope2):
@@ -315,24 +323,31 @@ def get_distance_from_horizontal_lines( vline, line_params_chip, X, labels, good
     slope = line_params_chip[0]
     intercept = line_params_chip[1]
 
-    ycoord = []
-    xcoord = []
-    for j in good_labels:
-        coord = X[labels==j]
-        argminima = np.argmin(coord,0)
-        ycoord.append(coord[argminima[0]][1])
-        xcoord.append(coord[argminima[0]][0]+vline)
+    if slope is not None:
 
-    distance = []
-    for x, y in zip(xcoord, ycoord):
-        distance.append(abs(-x +slope*y + intercept) / math.sqrt(slope*slope + 1) )
-    d = min(distance)
+        ycoord = []
+        xcoord = []
+        for j in good_labels:
+            coord = X[labels==j]
+            argminima = np.argmin(coord,0)
+            ycoord.append(coord[argminima[0]][1])
+            xcoord.append(coord[argminima[0]][0]+vline)
 
-    xcoord = np.array(xcoord)
-    ycoord = np.array(ycoord)
-    coord = [xcoord[distance == d], ycoord[distance == d]]
+        distance = []
+        for x, y in zip(xcoord, ycoord):
+            distance.append(abs(-x +slope*y + intercept) / math.sqrt(slope*slope + 1) )
+        if len(distance) > 1:
+            d = min(distance)
 
-    return d, coord
+            xcoord = np.array(xcoord)
+            ycoord = np.array(ycoord)
+            coord = [xcoord[distance == d], ycoord[distance == d]]
+
+            return np.format_float_positional(d, precision=2), coord
+        else:
+            return 'Cannot determine minimal distance', []
+    else:
+        return 'Cannot determine minimal distance', []
 
 ### Main function to yield processed image
 def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, binary, threshold, quality=0.1):
@@ -398,7 +413,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     else:
         processed2 = processed.copy()
 
-    if len(good_labels) > 0:
+    if len(coord) > 0:
         rad = np.arctan(line_params_chip[0])
         #processed2 = processed.copy()
         processed3 = cv.line(processed2, (int(coord[0]), int(coord[1])), 

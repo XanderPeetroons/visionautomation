@@ -84,12 +84,12 @@ class MyWindow(QMainWindow):
         """
 
         self.bcrop = QPushButton(self)
-        self.bcrop.setText("Get cropped image")
+        self.bcrop.setText("Show cropped image")
         self.bcrop.clicked.connect(self.get_cropped)
         self.bcrop.setMaximumSize(int(400/3240*width),int(80/2160*height))
 
         self.bprocess = QPushButton(self)
-        self.bprocess.setText("Get processed image")
+        self.bprocess.setText("Show processed image")
         self.bprocess.clicked.connect(self.get_processed)
         self.bprocess.setMaximumSize(int(400/3240*width),int(80/2160*height))
 
@@ -125,12 +125,12 @@ class MyWindow(QMainWindow):
         self.chip = QLabel("Chip",self)
         self.fiber = QLabel("Fiber",self)
         
-        self.thresh = QLabel("Binary threshold (< 250): ",self)
-        self.clust = QLabel("Angle detection: ",self)
-        self.cordet = QLabel("Corner detection (< 1): ",self)
+        self.thresh = QLabel("Binary threshold [Integer between 1 to 250]: ",self)
+        self.clust = QLabel("Angle detection [Integer between 1 to 10]: ",self)
+        self.cordet = QLabel("Corner detection [Real number between 0 to 1]: ",self)
         
         self.alpha1label = QLabel("Angle between chip and vertical axis: ",self)
-        self.alpha2label = QLabel("Angle between fiber and horizontal axis: ",self)
+        self.alpha2label = QLabel("Angle between fiber and chip edge: ",self)
         self.tethalabel = QLabel("Distance between chip and fiber: ",self)
         self.dlinelabel = QLabel("Distance between chip and fiber using horizontal line: ",self)
       
@@ -340,7 +340,7 @@ class MyWindow(QMainWindow):
             self.alpha1value.setText(str(processed_image[1]) + " " + u"\u00b0")
             self.alpha2value.setText(str(processed_image[2]) + " " + u"\u00b0")
             self.tethavalue.setText(str(processed_image[3]) + " " + "pixels")
-            self.dlinevalue.setText(str(int(processed_image[5]*100)/100) + " " + "pixels")
+            self.dlinevalue.setText(str(processed_image[5]) + " " + "pixels")
             
 
 
@@ -386,14 +386,12 @@ class MyWindow(QMainWindow):
         
     def clickleft(self):
         """ One pixel up """
-        self.line += 1
-        self.updateplot()
+        self.midline += 1
         self.update() # painter update
 
     def clickright(self):
         """ One pixel down """
-        self.line -= 1
-        self.updateplot()
+        self.midline -= 1
         self.update() # painter update
 
     def textchanged(self, text):
