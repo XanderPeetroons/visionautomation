@@ -140,6 +140,7 @@ class MyWindow(QMainWindow):
         self.tethavalue = QLabel(self)
         self.dlinevalue = QLabel(self)
 
+
         # INPUT TEXT
         self.cornerf = QLineEdit(placeholderText = str(self.quality))
         self.cornerf.textChanged.connect(self.qualitycorner)
