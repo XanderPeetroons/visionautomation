@@ -392,12 +392,12 @@ class MyWindow(QMainWindow):
         
     def clickleft(self):
         """ One pixel up """
-        self.midline += 1
+        self.midline -= 1
         self.update() # painter update
 
     def clickright(self):
         """ One pixel down """
-        self.midline -= 1
+        self.midline += 1
         self.update() # painter update
 
     def textchanged(self, text):
