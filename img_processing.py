@@ -123,10 +123,15 @@ def adapt_thresh_otsu(img):
 
 
 ### Draw contour based on binary image
-def get_contours (img):
+def get_contours (img, chip_img = True):
+    thickness = 2 ### thickness of the contour line
     contours, hierarchies = cv.findContours(img,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_NONE)
-    blank = np.zeros(img.shape[:2], dtype = 'uint8')
-    cv.drawContours(blank, contours,-1, (255,255,255), thickness=2)
+    blank = np.zeros(img.shape, dtype = 'uint8')
+    cv.drawContours(blank, contours, -1, (255,255,255), thickness=thickness)
+    ### In case of the chip image, need to remove the midline
+    if chip_img:
+        if min(blank[:, -thickness:].ravel()) == 255:
+            blank[:, -thickness:] = 0
     return blank
 
 ### Detect fiber and chip region (not neccessary if we let user to define AOI)
@@ -346,6 +351,17 @@ def get_distance_from_horizontal_lines( vline, line_params_chip, X, labels, good
     except:
         return 'Cannot determine', []
 
+### Check user's inputs if they satisfy the requirements
+def variable_checking(text, typ_func, rng):
+    try:
+        value = typ_func(text)
+        if (value-rng[0])*(value-rng[1]) < 0:
+            return True
+        else:
+            return False
+    except:
+        return False
+
 ### Main function to yield processed image
 def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, binary, threshold, quality=0.1):
     ### Step 1: Gray conversion + Smoothening
@@ -359,9 +375,10 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     if binary[0]:
         binary_chip = binary_threshold(img_left, threshold[0])
         contour_chip = get_contours(binary_chip)
+        otsuchip = threshold[0]
     else:
         contour_chip = canny_edge(img_left)
-        otsuchip = adapt_thresh_otsu(img_left)     
+        otsuchip, _ = adapt_thresh_otsu(img_left)     
     
     angled_line_chip, line_params_chip, _, _, _ = get_axial_line(contour_chip, True, 'last', 20, cluster_n_components[0])
     
@@ -373,10 +390,11 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     
     if binary[1]:
         binary_fiber = binary_threshold(contrast_enhanced_fiber, threshold[1])
+        otsufiber = threshold[1]
     else:
         otsufiber, binary_fiber = adapt_thresh_otsu(contrast_enhanced_fiber)
         
-    contour_fiber = get_contours(binary_fiber)
+    contour_fiber = get_contours(binary_fiber, False)
     angled_line_fiber, line_params_fiber, X, labels, good_labels  = get_axial_line(contour_fiber[upper_hline:lower_hline,:], 
         False, 'all', 20, cluster_n_components[1])
     
@@ -420,5 +438,5 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
 
     height = lower_hline-upper_hline
     cropped = processed3[:,max(int(vline-height/2),0):min(int(vline+height/2),processed.shape[1])]
-    return cropped, alpha1, alpha2, distancecorner, corners, distanceline, coord, otsuchip[0], otsufiber
+    return cropped, alpha1, alpha2, distancecorner, corners, distanceline, coord, otsuchip, otsufiber, contour_chip, contour_fiber
 

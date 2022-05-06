@@ -126,14 +126,14 @@ class MyWindow(QMainWindow):
         self.chip = QLabel("Chip",self)
         self.fiber = QLabel("Fiber",self)
         
-        self.thresh = QLabel("Binary threshold [Integer between 1 to 250]: ",self)
-        self.clust = QLabel("Angle detection [Integer between 1 to 10]: ",self)
-        self.cordet = QLabel("Corner detection [Real number between 0 to 1]: ",self)
+        self.thresh = QLabel("Binary threshold [Integer between 1 and 250]: ",self)
+        self.clust = QLabel("Angle detection [Integer between 1 and 10]: ",self)
+        self.cordet = QLabel("Corner detection [Real number between 0 and 1]: ",self)
         
         self.alpha1label = QLabel("Angle between chip and vertical axis: ",self)
         self.alpha2label = QLabel("Angle between fiber and chip edge: ",self)
-        self.tethalabel = QLabel("Distance between chip and fiber: ",self)
-        self.dlinelabel = QLabel("Distance between chip and fiber using horizontal line: ",self)
+        self.tethalabel = QLabel("Distance between chip and fiber (Corner detection): ",self)
+        self.dlinelabel = QLabel("Distance between chip and fiber (Line detection): ",self)
       
         self.alpha1value = QLabel(self)
         self.alpha2value = QLabel(self)
@@ -390,13 +390,13 @@ class MyWindow(QMainWindow):
 
         
     def clickleft(self):
-        """ One pixel up """
-        self.midline += 1
+        """ One pixel to left """
+        self.midline -= 1
         self.update() # painter update
 
     def clickright(self):
-        """ One pixel down """
-        self.midline -= 1
+        """ One pixel to right """
+        self.midline += 1
         self.update() # painter update
 
     def textchanged(self, text):
@@ -409,44 +409,49 @@ class MyWindow(QMainWindow):
             self.update() # painter update
 
     def clusterchip(self, text):
-        if text == "" or not isinstance(int(text),int):
-            print('not a valid value')
-            self.nb_cluster_components[0] = 5
-        else: 
+        if variable_checking(text, int, [0,10]):
             self.nb_cluster_components[0] = int(text)
+        else:
+            print(text + ' is not a valid value')
+            self.nb_cluster_components[0] = 5 
+            
             
     def clusterfiber(self, text):
-        if text == "" or not isinstance(int(text),int):
-            print('not a valid value')
-            self.nb_cluster_components[1] = 5
-        else: 
+        if variable_checking(text, int, [0,10]):
             self.nb_cluster_components[1] = int(text)
+        else:
+            print(text + ' is not a valid value')
+            self.nb_cluster_components[1] = 5 
+
 
     def binarychip(self, text):
-        if text == "" or not isinstance(int(text),int):
-            print('not an integer')
-            self.binary[0] = False
-            self.threshold[0] = 63
-        else: 
+        if variable_checking(text, int, [0, 251]):
             self.binary[0] = True
             self.threshold[0] = int(text)
+        else:
+            print(text + ' is not a valid value')
+            self.binary[0] = False
+            self.threshold[0] = 63
+        
 
     def binaryfiber(self, text):
-        if text == "" or not isinstance(int(text),int):
-            print('not an integer')
-            self.binary[1] = False
-            self.threshold[1] = 135
-        else: 
+        if variable_checking(text, int, [0, 251]):
             self.binary[1] = True
             self.threshold[1] = int(text)
+        else:
+            print(text + ' is not a valid value')
+            self.binary[1] = False
+            self.threshold[1] = 135
+
 
     def qualitycorner(self, text):
-        if text == "" or not isinstance(float(text),float):
-            print('not a valid value')
-            self.quality = 0.2
-        else: 
+        if variable_checking(text, float, [0, 1]):
             self.quality = float(text)
-            
+        else:
+            print(text + ' is not a valid value')
+            self.quality = 0.2
+
+
     def clicknext(self):
         """ One picture next """
 
