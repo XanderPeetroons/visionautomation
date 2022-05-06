@@ -364,8 +364,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
         contour_chip = get_contours(binary_chip)
     else:
         contour_chip = canny_edge(img_left)
-        #retc, binary_chip = adapt_thresh_otsu(img_left)   
-        #print( "{} {}".format(binary_chip,retc) )        
+        otsuchip = adapt_thresh_otsu(img_left)     
     
     angled_line_chip, line_params_chip, _, _, _ = get_axial_line(contour_chip, True, 'last', 20, cluster_n_components[0])
     
@@ -378,8 +377,8 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     if binary[1]:
         binary_fiber = binary_threshold(contrast_enhanced_fiber, threshold[1])
     else:
-        retf, binary_fiber = adapt_thresh_otsu(contrast_enhanced_fiber)
-        #print( "{} {}".format(binary_fiber,retf) )
+        otsufiber, binary_fiber = adapt_thresh_otsu(contrast_enhanced_fiber)
+        
     contour_fiber = get_contours(binary_fiber)
     angled_line_fiber, line_params_fiber, X, labels, good_labels  = get_axial_line(contour_fiber[upper_hline:lower_hline,:], 
         False, 'all', 20, cluster_n_components[1])
@@ -424,5 +423,5 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
 
     height = lower_hline-upper_hline
     cropped = processed3[:,max(int(vline-height/2),0):min(int(vline+height/2),processed.shape[1])]
-    return cropped, alpha1, alpha2, distancecorner, corners, distanceline, coord
+    return cropped, alpha1, alpha2, distancecorner, corners, distanceline, coord, otsuchip[0], otsufiber
 

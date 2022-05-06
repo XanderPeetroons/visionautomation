@@ -1,3 +1,4 @@
+from logging import PlaceHolder
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -140,23 +141,23 @@ class MyWindow(QMainWindow):
         self.dlinevalue = QLabel(self)
 
         # INPUT TEXT
-        self.cornerf = QLineEdit(self)
+        self.cornerf = QLineEdit(placeholderText = str(self.quality))
         self.cornerf.textChanged.connect(self.qualitycorner)
         self.cornerf.setMaximumWidth(100)
 
-        self.chipvalue = QLineEdit(self)
+        self.chipvalue = QLineEdit(placeholderText = str(self.nb_cluster_components[0]))
         self.chipvalue.textChanged.connect(self.clusterchip)
         self.chipvalue.setMaximumWidth(100)
 
-        self.fibervalue = QLineEdit(self)
+        self.fibervalue = QLineEdit(placeholderText = str(self.nb_cluster_components[1]))
         self.fibervalue.textChanged.connect(self.clusterfiber)
         self.fibervalue.setMaximumWidth(100)
 
-        self.contourc = QLineEdit(self)
+        self.contourc = QLineEdit(placeholderText = "...")
         self.contourc.textChanged.connect(self.binarychip)
         self.contourc.setMaximumWidth(100)
 
-        self.contourf = QLineEdit(self)
+        self.contourf = QLineEdit(placeholderText = "...")
         self.contourf.textChanged.connect(self.binaryfiber)
         self.contourf.setMaximumWidth(100)
         
@@ -325,6 +326,9 @@ class MyWindow(QMainWindow):
 
             processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, self.nb_cluster_components, self.binary, self.threshold, self.quality)
 
+            # Get initial binary threshold values from otsu function:
+            self.contourc.setPlaceholderText(str(int(processed_image[7])))
+            self.contourf.setPlaceholderText(str(int(processed_image[8])))
             # Save image
             cv.imwrite('Photos/Processed/Processed.jpg', processed_image[0])
 
@@ -386,12 +390,12 @@ class MyWindow(QMainWindow):
         
     def clickleft(self):
         """ One pixel up """
-        self.midline -= 1
+        self.midline += 1
         self.update() # painter update
 
     def clickright(self):
         """ One pixel down """
-        self.midline += 1
+        self.midline -= 1
         self.update() # painter update
 
     def textchanged(self, text):
