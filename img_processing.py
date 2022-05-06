@@ -258,16 +258,16 @@ def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_co
             y_max = np.array([data[1]]).max()
             y_mean = (y_min+y_max)/2
             imgLine = img.copy()
-            # imgLine = cv.cvtColor(img, cv.COLOR_GRAY2RGB)
+            imgLine = cv.cvtColor(imgLine, cv.COLOR_GRAY2RGB)
             slope = line_params[0]
             intercept = line_params[1]
 
             if chip_img == True:
                 cv.line(imgLine, (int(slope*x_min+intercept), x_min), (int(slope*x_max+intercept), x_max),
-                    (255, 0, 0), thickness=6, lineType=cv.LINE_AA)
+                    (0, 255, 0), thickness=6, lineType=cv.LINE_AA) ### Green
             else:
-                cv.line(imgLine, (x_min, int(slope*x_min+y_mean)), (x_max, int(slope*x_max+y_mean)),
-                    (255, 0, 0), thickness=6, lineType=cv.LINE_AA)
+                cv.line(imgLine, (0, int(slope*x_min+y_mean)), (x_max, int(slope*x_max+y_mean)),
+                    (255, 0, 0), thickness=6, lineType=cv.LINE_AA) ### Red
                   
             return imgLine, line_params, X, labels, good_labels
         else:
@@ -278,7 +278,7 @@ def get_axial_line(img, chip_img = True, peak_position = 'last', step = 20, n_co
 ### Calculate angle between 2 lines
 def get_angle(slope1, slope2):
     try:
-        deg = 90 - np.arctan(slope1)/np.pi*180 - np.arctan(slope2)/np.pi*180
+        deg = abs(90 - np.arctan(slope1)/np.pi*180 - np.arctan(slope2)/np.pi*180)
         return np.format_float_positional(deg, precision=2)
     except:
         return 'Cannot determine angle'
@@ -304,7 +304,7 @@ def get_distance(img_right, vline, line_params_chip, angled_line_fiber, quality)
     slope = line_params_chip[0]
     intercept = line_params_chip[1]
 
-    if (corners is not None) and (slope is not None):
+    try:
         corners = corners.reshape(-1,2)
         corners[:,0] = corners[:,0]+vline # shift the x-value by vline
         distance = []
@@ -314,7 +314,7 @@ def get_distance(img_right, vline, line_params_chip, angled_line_fiber, quality)
         d = min(distance)
         
         return np.format_float_positional(d, precision=2), corners[distance==d].ravel()
-    else:
+    except:
         return 'Cannot determine minimal distance', []
 
 def get_distance_from_horizontal_lines( vline, line_params_chip, X, labels, good_labels):
@@ -323,7 +323,7 @@ def get_distance_from_horizontal_lines( vline, line_params_chip, X, labels, good
     slope = line_params_chip[0]
     intercept = line_params_chip[1]
 
-    if slope is not None:
+    try:
 
         ycoord = []
         xcoord = []
@@ -336,17 +336,15 @@ def get_distance_from_horizontal_lines( vline, line_params_chip, X, labels, good
         distance = []
         for x, y in zip(xcoord, ycoord):
             distance.append(abs(-x +slope*y + intercept) / math.sqrt(slope*slope + 1) )
-        if len(distance) > 1:
-            d = min(distance)
 
-            xcoord = np.array(xcoord)
-            ycoord = np.array(ycoord)
-            coord = [xcoord[distance == d], ycoord[distance == d]]
+        d = min(distance)
 
-            return np.format_float_positional(d, precision=2), coord
-        else:
-            return 'Cannot determine minimal distance', []
-    else:
+        xcoord = np.array(xcoord)
+        ycoord = np.array(ycoord)
+        coord = [xcoord[distance == d], ycoord[distance == d]]
+
+        return np.format_float_positional(d, precision=2), coord
+    except:
         return 'Cannot determine minimal distance', []
 
 ### Main function to yield processed image
@@ -409,7 +407,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
         #processed2 = processed.copy()
         processed2 = cv.line(processed, (int(corners[0]), int(corners[1])), 
             ( int(corners[0]-np.cos(rad)*float(distancecorner)), int(corners[1]-np.sin(rad)*float(distancecorner)) ),
-                (255, 0, 0), thickness=5, lineType=cv.LINE_AA)
+                (173, 216, 230), thickness=5, lineType=cv.LINE_AA) ### Pink
     else:
         processed2 = processed.copy()
 
@@ -418,7 +416,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
         #processed2 = processed.copy()
         processed3 = cv.line(processed2, (int(coord[0]), int(coord[1])), 
             ( int(coord[0]-np.cos(rad)*float(distanceline)), int(coord[1]-np.sin(rad)*float(distanceline)) ),
-                (255, 0, 0), thickness=5, lineType=cv.LINE_AA)
+                (255, 243, 0), thickness=5, lineType=cv.LINE_AA) ### Yellow
     else:
         processed3 = processed2.copy()
 
