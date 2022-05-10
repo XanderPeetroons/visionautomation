@@ -130,8 +130,8 @@ def get_contours (img, chip_img = True):
     cv.drawContours(blank, contours, -1, (255,255,255), thickness=thickness)
     ### In case of the chip image, need to remove the midline
     if chip_img:
-        if min(blank[:, -thickness:].ravel()) == 255:
-            blank[:, -thickness:] = 0
+        # if min(blank[:, -thickness:].ravel()) == 255:
+        blank[:, -thickness:] = 0
     return blank
 
 ### Detect fiber and chip region (not neccessary if we let user to define AOI)
@@ -288,7 +288,7 @@ def get_angle(slope1, slope2):
         return 'Cannot determine'
 
 ### Calculate vertical distance between point to line
-def get_distance(img_right, vline, line_params_chip, angled_line_fiber, quality):
+def get_distance(img_right, vline, line_params_chip, quality):
     ### Corner detection:
     ### Maximum number of corners to return. If there are more corners than are found, the strongest of them is returned.
     ### Parameter characterizing the minimal accepted quality of image corners => tunable parameter
@@ -410,7 +410,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     """
 
     ### Step 4: Detect corners and calculate vertical distance (to chip edge)
-    distancecorner, corners = get_distance(img_right[upper_hline:lower_hline,:], vline, line_params_chip, angled_line_fiber, quality)
+    distancecorner, corners = get_distance(img_right[upper_hline:lower_hline,:], vline, line_params_chip, quality)
     distanceline, coord = get_distance_from_horizontal_lines(vline, line_params_chip, X, labels, good_labels)
 
     ### Step 5: Join image and return angle value
