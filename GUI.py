@@ -71,7 +71,7 @@ class MyWindow(QMainWindow):
         2: TOP MIDDLE: CROPPED IMAGE TO AREA OF INTEREST
         """
         self.textimage = QLabel(self)
-        self.textimage.setText("Crop Image")
+        self.textimage.setText("Zoom Image")
         self.textimage.setFont(self.fontvar)
         self.textimage.setGeometry(int(1450/3240*width),int(50/2160*height), int(1000/3240*width),int(100/2160*height))
 
@@ -85,7 +85,7 @@ class MyWindow(QMainWindow):
         """
 
         self.bcrop = QPushButton(self)
-        self.bcrop.setText("Show cropped image")
+        self.bcrop.setText("Show zoom image")
         self.bcrop.clicked.connect(self.get_cropped)
         self.bcrop.setMaximumSize(int(400/3240*width),int(80/2160*height))
 
