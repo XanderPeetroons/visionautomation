@@ -150,21 +150,71 @@ class MyWindow(QMainWindow):
         self.cornerf.textChanged.connect(self.qualitycorner)
         self.cornerf.setMaximumWidth(100)
 
+        self.cornerf = QSlider()
+        self.cornerf.setOrientation(Qt.Horizontal)
+        self.cornerf.setTickPosition(QSlider.TicksBelow)
+        self.cornerf.setTickInterval(1)
+        self.cornerf.setMinimum(0)
+        self.cornerf.setMaximum(100)
+        self.cornerf.setValue(20)
+        self.cornerf.setMaximumSize(int(120/3240*width),int(30/2160*height))
+        self.cornerf.valueChanged.connect(self.changedValueCornerDetection)
+
         self.chipvalue = QLineEdit(placeholderText = str(self.nb_cluster_components[0]))
         self.chipvalue.textChanged.connect(self.clusterchip)
         self.chipvalue.setMaximumWidth(100)
+
+        self.chipvalue = QSlider()
+        self.chipvalue.setOrientation(Qt.Horizontal)
+        self.chipvalue.setTickPosition(QSlider.TicksBelow)
+        self.chipvalue.setTickInterval(1)
+        self.chipvalue.setMinimum(0)
+        self.chipvalue.setMaximum(100)
+        self.chipvalue.setValue(20)
+        self.chipvalue.setMaximumSize(int(120/3240*width),int(30/2160*height))
+        self.chipvalue.valueChanged.connect(self.changedValueCornerDetection)
 
         self.fibervalue = QLineEdit(placeholderText = str(self.nb_cluster_components[1]))
         self.fibervalue.textChanged.connect(self.clusterfiber)
         self.fibervalue.setMaximumWidth(100)
 
+        self.fibervalue = QSlider()
+        self.fibervalue.setOrientation(Qt.Horizontal)
+        self.fibervalue.setTickPosition(QSlider.TicksBelow)
+        self.fibervalue.setTickInterval(1)
+        self.fibervalue.setMinimum(0)
+        self.fibervalue.setMaximum(100)
+        self.fibervalue.setValue(20)
+        self.fibervalue.setMaximumSize(int(120/3240*width),int(30/2160*height))
+        self.fibervalue.valueChanged.connect(self.changedValueCornerDetection)
+
         self.contourc = QLineEdit(placeholderText = "...")
         self.contourc.textChanged.connect(self.binarychip)
         self.contourc.setMaximumWidth(100)
 
+        self.contourc = QSlider()
+        self.contourc.setOrientation(Qt.Horizontal)
+        self.contourc.setTickPosition(QSlider.TicksBelow)
+        self.contourc.setTickInterval(1)
+        self.contourc.setMinimum(0)
+        self.contourc.setMaximum(100)
+        self.contourc.setValue(20)
+        self.contourc.setMaximumSize(int(120/3240*width),int(30/2160*height))
+        self.contourc.valueChanged.connect(self.changedValueCornerDetection)
+
         self.contourf = QLineEdit(placeholderText = "...")
         self.contourf.textChanged.connect(self.binaryfiber)
         self.contourf.setMaximumWidth(100)
+
+        self.contourf = QSlider()
+        self.contourf.setOrientation(Qt.Horizontal)
+        self.contourf.setTickPosition(QSlider.TicksBelow)
+        self.contourf.setTickInterval(1)
+        self.contourf.setMinimum(0)
+        self.contourf.setMaximum(100)
+        self.contourf.setValue(20)
+        self.contourf.setMaximumSize(int(120/3240*width),int(30/2160*height))
+        self.contourf.valueChanged.connect(self.changedValueCornerDetection)
         
         # BUTTONS
         self.bleft = QPushButton(self)
@@ -217,7 +267,7 @@ class MyWindow(QMainWindow):
         boxofresults.setFixedSize(int(1/3*width),int(1/7*height))
 
         layout.addWidget(self.images, 0, 0, 1, 3) ## label covering half of window
-        
+
         ## Buttons
         layout.addWidget(boxofbuttons,1,1)
         butlayout.addWidget(self.bnext, 0, 0)
@@ -226,12 +276,12 @@ class MyWindow(QMainWindow):
         butlayout.addWidget(self.bleft, 2, 0)
         butlayout.addWidget(self.bright, 3, 0)
         butlayout.addWidget(self.bcrop, 2, 1)
-        butlayout.addWidget(self.bprocess, 3, 1)   
+        butlayout.addWidget(self.bprocess, 3, 1)
         boxofbuttons.setLayout(butlayout)
 
         ## Process
         layout.addWidget(boxofinputs,1,3)
-        # Text labels   
+        # Text labels
         inputslayout.addWidget(self.thresh, 2, 3)
         inputslayout.addWidget(self.clust, 3, 3)
         inputslayout.addWidget(self.cordet, 4, 3)
@@ -394,6 +444,11 @@ class MyWindow(QMainWindow):
     def mouseReleaseEvent(self, event):
         if event.button == Qt.LeftButton:
             self.dragging = False
+
+    def changedValueCornerDetection(self):
+        value = self.cornerf.value()/100
+        self.quality = value
+
 
     def get_cropped(self):
         """ Activate code to draw the cropped image in the top middle """
