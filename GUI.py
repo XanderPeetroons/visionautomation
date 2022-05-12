@@ -125,6 +125,7 @@ class MyWindow(QMainWindow):
         
         self.chip = QLabel("Chip",self)
         self.fiber = QLabel("Fiber",self)
+        self.foldertext = QLabel("In directory: visionautomation/"+self.directory,self)
         
         self.thresh = QLabel("Binary threshold [Integer between 1 and 250]: ",self)
         self.clust = QLabel("Angle detection [Integer between 1 and 10]: ",self)
@@ -158,7 +159,7 @@ class MyWindow(QMainWindow):
         self.cornerf.setMaximum(100)
         self.cornerf.setValue(20)
         self.cornerf.setMaximumSize(int(120/3240*width),int(30/2160*height))
-        self.cornerf.valueChanged.connect(self.changedValueCornerDetection)
+        self.cornerf.valueChanged.connect(self.valueCornerDetection)
 
         self.chipvalue = QLineEdit(placeholderText = str(self.nb_cluster_components[0]))
         self.chipvalue.textChanged.connect(self.clusterchip)
@@ -168,11 +169,11 @@ class MyWindow(QMainWindow):
         self.chipvalue.setOrientation(Qt.Horizontal)
         self.chipvalue.setTickPosition(QSlider.TicksBelow)
         self.chipvalue.setTickInterval(1)
-        self.chipvalue.setMinimum(0)
+        self.chipvalue.setMinimum(1)
         self.chipvalue.setMaximum(100)
         self.chipvalue.setValue(20)
         self.chipvalue.setMaximumSize(int(120/3240*width),int(30/2160*height))
-        self.chipvalue.valueChanged.connect(self.changedValueCornerDetection)
+        self.chipvalue.valueChanged.connect(self.valueChipCluster)
 
         self.fibervalue = QLineEdit(placeholderText = str(self.nb_cluster_components[1]))
         self.fibervalue.textChanged.connect(self.clusterfiber)
@@ -182,11 +183,11 @@ class MyWindow(QMainWindow):
         self.fibervalue.setOrientation(Qt.Horizontal)
         self.fibervalue.setTickPosition(QSlider.TicksBelow)
         self.fibervalue.setTickInterval(1)
-        self.fibervalue.setMinimum(0)
+        self.fibervalue.setMinimum(1)
         self.fibervalue.setMaximum(100)
         self.fibervalue.setValue(20)
         self.fibervalue.setMaximumSize(int(120/3240*width),int(30/2160*height))
-        self.fibervalue.valueChanged.connect(self.changedValueCornerDetection)
+        self.fibervalue.valueChanged.connect(self.valueFiberCluster)
 
         self.contourc = QLineEdit(placeholderText = "...")
         self.contourc.textChanged.connect(self.binarychip)
@@ -196,11 +197,11 @@ class MyWindow(QMainWindow):
         self.contourc.setOrientation(Qt.Horizontal)
         self.contourc.setTickPosition(QSlider.TicksBelow)
         self.contourc.setTickInterval(1)
-        self.contourc.setMinimum(0)
-        self.contourc.setMaximum(100)
+        self.contourc.setMinimum(1)
+        self.contourc.setMaximum(250)
         self.contourc.setValue(20)
         self.contourc.setMaximumSize(int(120/3240*width),int(30/2160*height))
-        self.contourc.valueChanged.connect(self.changedValueCornerDetection)
+        self.contourc.valueChanged.connect(self.valueChipContour)
 
         self.contourf = QLineEdit(placeholderText = "...")
         self.contourf.textChanged.connect(self.binaryfiber)
@@ -210,11 +211,11 @@ class MyWindow(QMainWindow):
         self.contourf.setOrientation(Qt.Horizontal)
         self.contourf.setTickPosition(QSlider.TicksBelow)
         self.contourf.setTickInterval(1)
-        self.contourf.setMinimum(0)
-        self.contourf.setMaximum(100)
+        self.contourf.setMinimum(1)
+        self.contourf.setMaximum(250)
         self.contourf.setValue(20)
         self.contourf.setMaximumSize(int(120/3240*width),int(30/2160*height))
-        self.contourf.valueChanged.connect(self.changedValueCornerDetection)
+        self.contourf.valueChanged.connect(self.valueFiberContour)
         
         # BUTTONS
         self.bleft = QPushButton(self)
@@ -270,13 +271,14 @@ class MyWindow(QMainWindow):
 
         ## Buttons
         layout.addWidget(boxofbuttons,1,1)
-        butlayout.addWidget(self.bnext, 0, 0)
+        butlayout.addWidget(self.foldertext, 0,0,1,2)
+        butlayout.addWidget(self.bnext, 1, 0)
         #butlayout.setRowStretch(1,2)
-        butlayout.addWidget(self.bbrowse ,0,1)
-        butlayout.addWidget(self.bleft, 2, 0)
-        butlayout.addWidget(self.bright, 3, 0)
-        butlayout.addWidget(self.bcrop, 2, 1)
-        butlayout.addWidget(self.bprocess, 3, 1)
+        butlayout.addWidget(self.bbrowse ,1,1)
+        butlayout.addWidget(self.bleft, 3, 0)
+        butlayout.addWidget(self.bright, 3, 1)
+        butlayout.addWidget(self.bcrop, 4, 0)
+        butlayout.addWidget(self.bprocess, 4, 1)
         boxofbuttons.setLayout(butlayout)
 
         ## Process
@@ -395,8 +397,8 @@ class MyWindow(QMainWindow):
             processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, self.nb_cluster_components, self.binary, self.threshold, self.quality)
 
             # Get initial binary threshold values from otsu function:
-            self.contourc.setPlaceholderText(str(int(processed_image[7])))
-            self.contourf.setPlaceholderText(str(int(processed_image[8])))
+            # self.contourc.setPlaceholderText(str(int(processed_image[7])))
+            # self.contourf.setPlaceholderText(str(int(processed_image[8])))
             # Save image
             cv.imwrite('Photos/Processed/Processed.jpg', processed_image[0])
 
@@ -445,9 +447,25 @@ class MyWindow(QMainWindow):
         if event.button == Qt.LeftButton:
             self.dragging = False
 
-    def changedValueCornerDetection(self):
+    def valueCornerDetection(self):
         value = self.cornerf.value()/100
         self.quality = value
+
+    def valueChipContour(self):
+        self.threshold[0] = self.contourc.value()
+        
+
+    def valueFiberContour(self):
+        self.threshold[1] = self.contourf.value()
+        
+
+    def valueChipCluster(self):
+        value = self.chipvalue.value()/100
+        self.nb_cluster_components[0] = value
+
+    def valueFiberCluster(self):
+        value = self.fibervalue.value()/100
+        self.nb_cluster_components[1] = value
 
 
     def get_cropped(self):
