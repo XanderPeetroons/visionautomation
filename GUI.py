@@ -136,9 +136,13 @@ class MyWindow(QMainWindow):
         self.dlinelabel = QLabel("Distance between chip and fiber (Line detection): ",self)
       
         self.alpha1value = QLabel(self)
+        self.alpha1value.setStyleSheet("background-color:red")
         self.alpha2value = QLabel(self)
+        self.alpha2value.setStyleSheet("background-color: lightgreen")
         self.tethavalue = QLabel(self)
+        self.tethavalue.setStyleSheet("background-color:#ADD8E6") #lightblue
         self.dlinevalue = QLabel(self)
+        self.dlinevalue.setStyleSheet("background-color:yellow")
 
 
         # INPUT TEXT
@@ -163,7 +167,6 @@ class MyWindow(QMainWindow):
         self.contourf.setMaximumWidth(100)
         
         # BUTTONS
-        
         self.bleft = QPushButton(self)
         self.bleft.setText("Left")
         self.bleft.clicked.connect(self.clickleft)
@@ -199,50 +202,64 @@ class MyWindow(QMainWindow):
         """
         LAY OUT
         """
-        # Creating a grid of 4x8: first row is half of the windows, then buttons, 
-        # texts and input parameters are in an specific position
+        # Creating a grid for grid boxes, outer grid 2X3: first row is half of the windows, second row are the 3 grid boxes
+        # Boxes are: 1 for buttons, 1 for input parameters and 1 for results, each of them are define as grids
         
         layout = QGridLayout()
-        
-        layout.addWidget(self.images, 0, 0, 1, 8) ## label covering half of window
-        
-        layout.addWidget(self.bnext, 1, 0)
-        layout.setRowStretch(1,2)
-        layout.addWidget(self.bbrowse ,1,1)
+        butlayout = QGridLayout()
+        inputslayout = QGridLayout()
+        resultslayout = QGridLayout()
 
-        ## Button
-        layout.addWidget(self.bleft, 3, 0)
-        layout.addWidget(self.bright, 4, 0)
-        layout.addWidget(self.bcrop, 3, 1)
-        layout.addWidget(self.bprocess, 4, 1)   
+        boxofbuttons = QGroupBox(str("Buttons title"))
+        boxofbuttons.setFixedSize(int(1/3*width),int(1/7*height))
+        boxofinputs = QGroupBox(str("Processing parameters"))
+        boxofresults = QGroupBox(str("Results"))
+        boxofresults.setFixedSize(int(1/3*width),int(1/7*height))
 
-        ## Text labels
-        layout.addWidget(self.thresh, 2, 3)
-        layout.addWidget(self.clust, 3, 3)
-        layout.addWidget(self.cordet, 4, 3)
+        layout.addWidget(self.images, 0, 0, 1, 3) ## label covering half of window
         
-        ## Text titles
-        layout.addWidget(self.chip, 1, 4)
-        layout.addWidget(self.fiber, 1, 5)
-        
-        ## Input parameters
-        layout.addWidget(self.contourc, 2, 4)
-        layout.addWidget(self.contourf, 2, 5)
-        layout.addWidget(self.chipvalue, 3, 4)
-        layout.addWidget(self.fibervalue, 3, 5)
-        layout.addWidget(self.cornerf, 4, 5)
+        ## Buttons
+        layout.addWidget(boxofbuttons,1,1)
+        butlayout.addWidget(self.bnext, 0, 0)
+        #butlayout.setRowStretch(1,2)
+        butlayout.addWidget(self.bbrowse ,0,1)
+        butlayout.addWidget(self.bleft, 2, 0)
+        butlayout.addWidget(self.bright, 3, 0)
+        butlayout.addWidget(self.bcrop, 2, 1)
+        butlayout.addWidget(self.bprocess, 3, 1)   
+        boxofbuttons.setLayout(butlayout)
+
+        ## Process
+        layout.addWidget(boxofinputs,1,3)
+        # Text labels   
+        inputslayout.addWidget(self.thresh, 2, 3)
+        inputslayout.addWidget(self.clust, 3, 3)
+        inputslayout.addWidget(self.cordet, 4, 3)
+        # Text titles
+        inputslayout.addWidget(self.chip, 1, 4)
+        inputslayout.addWidget(self.fiber, 1, 5)
+        # Input parameters
+        inputslayout.addWidget(self.contourc, 2, 4)
+        inputslayout.addWidget(self.contourf, 2, 5)
+        inputslayout.addWidget(self.chipvalue, 3, 4)
+        inputslayout.addWidget(self.fibervalue, 3, 5)
+        inputslayout.addWidget(self.cornerf, 4, 5)
+        boxofinputs.setLayout(inputslayout)
 
         ## Results
-        layout.addWidget(self.alpha1label, 1, 7)
-        layout.addWidget(self.alpha2label, 2, 7)
-        layout.addWidget(self.tethalabel, 3, 7)
-        layout.addWidget(self.dlinelabel, 4, 7)
+        layout.addWidget(boxofresults,1,7)
+        #Text labels
+        resultslayout.addWidget(self.alpha1label, 1, 7)
+        resultslayout.addWidget(self.alpha2label, 2, 7)
+        resultslayout.addWidget(self.tethalabel, 3, 7)
+        resultslayout.addWidget(self.dlinelabel, 4, 7)
+        #Output parameters
+        resultslayout.addWidget(self.alpha1value, 1, 8)
+        resultslayout.addWidget(self.alpha2value, 2, 8)
+        resultslayout.addWidget(self.tethavalue, 3, 8)
+        resultslayout.addWidget(self.dlinevalue, 4, 8)
+        boxofresults.setLayout(resultslayout)
 
-        layout.addWidget(self.alpha1value, 1, 8)
-        layout.addWidget(self.alpha2value, 2, 8)
-        layout.addWidget(self.tethavalue, 3, 8)
-        layout.addWidget(self.dlinevalue, 4, 8)
-            
         layout.setRowStretch(5,2) ## for some reason, the first row goes up
         self.centralWidget = QWidget() 
         self.centralWidget.setLayout(layout)

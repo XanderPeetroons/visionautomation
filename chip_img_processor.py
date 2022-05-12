@@ -71,9 +71,9 @@ if __name__ == "__main__":
 
     ### Calculating angle and drawing line
     contour_chip10x = get_contours(binary_chip10x)
-    angled_line_chip10x, line_params = draw_angle_line(contour_chip10x, True, 'last', 10, 2)
-    textc = 'Angle: ' + get_angle(line_params[0], 0)
-    cv.imshow('Contour chip 10x', rescale(add_text(angled_line_chip10x, textc),0.48))
+    #angled_line_chip10x, line_params = draw_angle_line(contour_chip10x, True, 'last', 10, 2)
+    #textc = 'Angle: ' + get_angle(line_params[0], 0)
+    #cv.imshow('Contour chip 10x', rescale(add_text(angled_line_chip10x, textc),0.48))
     
 
     ### Merging processed images
