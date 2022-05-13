@@ -452,20 +452,22 @@ class MyWindow(QMainWindow):
         self.quality = value
 
     def valueChipContour(self):
-        self.threshold[0] = self.contourc.value()
-        
+        self.threshold[0] = int(self.contourc.value())
+        self.binary[0] = True
+
 
     def valueFiberContour(self):
-        self.threshold[1] = self.contourf.value()
-        
-
+        self.threshold[1] = int(self.contourf.value())
+        self.binary[1] = True
+ 
     def valueChipCluster(self):
-        value = self.chipvalue.value()/100
-        self.nb_cluster_components[0] = value
+        value = self.chipvalue.value()/10
+        self.nb_cluster_components[0] = int(value)
+        print(self.nb_cluster_components)
 
     def valueFiberCluster(self):
-        value = self.fibervalue.value()/100
-        self.nb_cluster_components[1] = value
+        value = self.fibervalue.value()/10
+        self.nb_cluster_components[1] = int(value)
 
 
     def get_cropped(self):
@@ -477,6 +479,7 @@ class MyWindow(QMainWindow):
         """ Activate code to draw the processed image with results in the top right """
         self.drawProcessed = True
         self.update() # painter update
+
 
         
     def clickleft(self):
