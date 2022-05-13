@@ -172,8 +172,13 @@ class MyWindow(QMainWindow):
         self.cornerf.setTickInterval(1)
         self.cornerf.setMinimum(0)
         self.cornerf.setMaximum(100)
+<<<<<<< HEAD
         self.cornerf.setValue(20)
         self.cornerf.setMaximumSize(int(200/3240*width),int(30/2160*height))
+=======
+        self.cornerf.setValue(self.quality*100)
+        self.cornerf.setMaximumSize(int(120/3240*width),int(30/2160*height))
+>>>>>>> 566a7289fbd033080c0d454d67e3202211b37332
         self.cornerf.valueChanged.connect(self.valueCornerDetection)
 
         self.chipvalue = QLineEdit(placeholderText = str(self.nb_cluster_components[0]))
@@ -186,8 +191,13 @@ class MyWindow(QMainWindow):
         self.chipvalue.setTickInterval(1)
         self.chipvalue.setMinimum(1)
         self.chipvalue.setMaximum(100)
+<<<<<<< HEAD
         self.chipvalue.setValue(20)
         self.chipvalue.setMaximumSize(int(200/3240*width),int(30/2160*height))
+=======
+        self.chipvalue.setValue(self.nb_cluster_components[0]*10)
+        self.chipvalue.setMaximumSize(int(120/3240*width),int(30/2160*height))
+>>>>>>> 566a7289fbd033080c0d454d67e3202211b37332
         self.chipvalue.valueChanged.connect(self.valueChipCluster)
 
         self.fibervalue = QLineEdit(placeholderText = str(self.nb_cluster_components[1]))
@@ -200,8 +210,13 @@ class MyWindow(QMainWindow):
         self.fibervalue.setTickInterval(1)
         self.fibervalue.setMinimum(1)
         self.fibervalue.setMaximum(100)
+<<<<<<< HEAD
         self.fibervalue.setValue(20)
         self.fibervalue.setMaximumSize(int(200/3240*width),int(30/2160*height))
+=======
+        self.fibervalue.setValue(self.nb_cluster_components[1]*10)
+        self.fibervalue.setMaximumSize(int(120/3240*width),int(30/2160*height))
+>>>>>>> 566a7289fbd033080c0d454d67e3202211b37332
         self.fibervalue.valueChanged.connect(self.valueFiberCluster)
 
         self.contourc = QLineEdit(placeholderText = "...")
@@ -214,8 +229,13 @@ class MyWindow(QMainWindow):
         self.contourc.setTickInterval(1)
         self.contourc.setMinimum(1)
         self.contourc.setMaximum(250)
+<<<<<<< HEAD
         self.contourc.setValue(20)
         self.contourc.setMaximumSize(int(200/3240*width),int(30/2160*height))
+=======
+        self.contourc.setValue(1)
+        self.contourc.setMaximumSize(int(120/3240*width),int(30/2160*height))
+>>>>>>> 566a7289fbd033080c0d454d67e3202211b37332
         self.contourc.valueChanged.connect(self.valueChipContour)
 
         self.contourf = QLineEdit(placeholderText = "...")
@@ -228,8 +248,13 @@ class MyWindow(QMainWindow):
         self.contourf.setTickInterval(1)
         self.contourf.setMinimum(1)
         self.contourf.setMaximum(250)
+<<<<<<< HEAD
         self.contourf.setValue(20)
         self.contourf.setMaximumSize(int(200/3240*width),int(30/2160*height))
+=======
+        self.contourf.setValue(1)
+        self.contourf.setMaximumSize(int(120/3240*width),int(30/2160*height))
+>>>>>>> 566a7289fbd033080c0d454d67e3202211b37332
         self.contourf.valueChanged.connect(self.valueFiberContour)
         
         # BUTTONS
@@ -419,8 +444,8 @@ class MyWindow(QMainWindow):
             processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, self.nb_cluster_components, self.binary, self.threshold, self.quality)
 
             # Get initial binary threshold values from otsu function:
-            # self.contourc.setPlaceholderText(str(int(processed_image[7])))
-            # self.contourf.setPlaceholderText(str(int(processed_image[8])))
+            self.contourc.setValue(int(processed_image[7]))
+            self.contourf.setValue(int(processed_image[8]))
             # Save image
             cv.imwrite('Photos/Processed/Processed.jpg', processed_image[0])
 
@@ -474,20 +499,22 @@ class MyWindow(QMainWindow):
         self.quality = value
 
     def valueChipContour(self):
-        self.threshold[0] = self.contourc.value()
-        
+        self.threshold[0] = int(self.contourc.value())
+        self.binary[0] = True
+
 
     def valueFiberContour(self):
-        self.threshold[1] = self.contourf.value()
-        
-
+        self.threshold[1] = int(self.contourf.value())
+        self.binary[1] = True
+ 
     def valueChipCluster(self):
-        value = self.chipvalue.value()/100
-        self.nb_cluster_components[0] = value
+        value = self.chipvalue.value()/10
+        self.nb_cluster_components[0] = int(value)
+        print(self.nb_cluster_components)
 
     def valueFiberCluster(self):
-        value = self.fibervalue.value()/100
-        self.nb_cluster_components[1] = value
+        value = self.fibervalue.value()/10
+        self.nb_cluster_components[1] = int(value)
 
 
     def get_cropped(self):
@@ -499,6 +526,7 @@ class MyWindow(QMainWindow):
         """ Activate code to draw the processed image with results in the top right """
         self.drawProcessed = True
         self.update() # painter update
+
 
         
     def clickleft(self):
