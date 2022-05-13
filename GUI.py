@@ -172,13 +172,8 @@ class MyWindow(QMainWindow):
         self.cornerf.setTickInterval(1)
         self.cornerf.setMinimum(0)
         self.cornerf.setMaximum(100)
-<<<<<<< HEAD
-        self.cornerf.setValue(20)
+        self.cornerf.setValue(int(self.quality*100))
         self.cornerf.setMaximumSize(int(200/3240*width),int(30/2160*height))
-=======
-        self.cornerf.setValue(self.quality*100)
-        self.cornerf.setMaximumSize(int(120/3240*width),int(30/2160*height))
->>>>>>> 566a7289fbd033080c0d454d67e3202211b37332
         self.cornerf.valueChanged.connect(self.valueCornerDetection)
 
         self.chipvalue = QLineEdit(placeholderText = str(self.nb_cluster_components[0]))
@@ -191,13 +186,8 @@ class MyWindow(QMainWindow):
         self.chipvalue.setTickInterval(1)
         self.chipvalue.setMinimum(1)
         self.chipvalue.setMaximum(100)
-<<<<<<< HEAD
-        self.chipvalue.setValue(20)
-        self.chipvalue.setMaximumSize(int(200/3240*width),int(30/2160*height))
-=======
         self.chipvalue.setValue(self.nb_cluster_components[0]*10)
-        self.chipvalue.setMaximumSize(int(120/3240*width),int(30/2160*height))
->>>>>>> 566a7289fbd033080c0d454d67e3202211b37332
+        self.chipvalue.setMaximumSize(int(200/3240*width),int(30/2160*height))
         self.chipvalue.valueChanged.connect(self.valueChipCluster)
 
         self.fibervalue = QLineEdit(placeholderText = str(self.nb_cluster_components[1]))
@@ -210,13 +200,8 @@ class MyWindow(QMainWindow):
         self.fibervalue.setTickInterval(1)
         self.fibervalue.setMinimum(1)
         self.fibervalue.setMaximum(100)
-<<<<<<< HEAD
-        self.fibervalue.setValue(20)
-        self.fibervalue.setMaximumSize(int(200/3240*width),int(30/2160*height))
-=======
         self.fibervalue.setValue(self.nb_cluster_components[1]*10)
-        self.fibervalue.setMaximumSize(int(120/3240*width),int(30/2160*height))
->>>>>>> 566a7289fbd033080c0d454d67e3202211b37332
+        self.fibervalue.setMaximumSize(int(200/3240*width),int(30/2160*height))
         self.fibervalue.valueChanged.connect(self.valueFiberCluster)
 
         self.contourc = QLineEdit(placeholderText = "...")
@@ -229,13 +214,8 @@ class MyWindow(QMainWindow):
         self.contourc.setTickInterval(1)
         self.contourc.setMinimum(1)
         self.contourc.setMaximum(250)
-<<<<<<< HEAD
-        self.contourc.setValue(20)
-        self.contourc.setMaximumSize(int(200/3240*width),int(30/2160*height))
-=======
         self.contourc.setValue(1)
-        self.contourc.setMaximumSize(int(120/3240*width),int(30/2160*height))
->>>>>>> 566a7289fbd033080c0d454d67e3202211b37332
+        self.contourc.setMaximumSize(int(200/3240*width),int(30/2160*height))
         self.contourc.valueChanged.connect(self.valueChipContour)
 
         self.contourf = QLineEdit(placeholderText = "...")
@@ -248,13 +228,8 @@ class MyWindow(QMainWindow):
         self.contourf.setTickInterval(1)
         self.contourf.setMinimum(1)
         self.contourf.setMaximum(250)
-<<<<<<< HEAD
-        self.contourf.setValue(20)
-        self.contourf.setMaximumSize(int(200/3240*width),int(30/2160*height))
-=======
         self.contourf.setValue(1)
-        self.contourf.setMaximumSize(int(120/3240*width),int(30/2160*height))
->>>>>>> 566a7289fbd033080c0d454d67e3202211b37332
+        self.contourf.setMaximumSize(int(200/3240*width),int(30/2160*height))
         self.contourf.valueChanged.connect(self.valueFiberContour)
         
         # BUTTONS
@@ -262,14 +237,14 @@ class MyWindow(QMainWindow):
         self.bleft.setText("Left")
         self.bleft.setFont(self.fontcontent)
         self.bleft.clicked.connect(self.clickleft)
-        self.bleft.setMaximumSize(int(180/3240*width),int(100/2160*height))
+        self.bleft.setMaximumSize(int(400/3240*width),int(100/2160*height))
         # self.bup.move(1600,430)
 
         self.bright = QPushButton(self)
         self.bright.setText("Right")
         self.bright.setFont(self.fontcontent)
         self.bright.clicked.connect(self.clickright)
-        self.bright.setMaximumSize(int(180/3240*width),int(100/2160*height))
+        self.bright.setMaximumSize(int(400/3240*width),int(100/2160*height))
 
         self.textline = QLineEdit()
         self.textline.textChanged.connect(self.textchanged)
@@ -280,7 +255,7 @@ class MyWindow(QMainWindow):
         self.bnext.setText("Next Image")
         self.bnext.setFont(self.fontcontent)
         self.bnext.clicked.connect(self.clicknext)
-        self.bnext.setMaximumSize(int(180/3240*width),int(100/2160*height))
+        self.bnext.setMaximumSize(int(400/3240*width),int(100/2160*height))
         self.bnext.setGeometry(int(2900/3240*width),int(100/2160*height),int(120/3240*width),int(40/2160*height))
 
         self.textparameter = QLineEdit()
@@ -292,7 +267,7 @@ class MyWindow(QMainWindow):
         self.bbrowse.setText("Select")
         self.bbrowse.setFont(self.fontcontent)
         self.bbrowse.clicked.connect(self.browse)
-        self.bbrowse.setMaximumSize(int(180/3240*width),int(100/2160*height))
+        self.bbrowse.setMaximumSize(int(400/3240*width),int(100/2160*height))
 
         """
         LAY OUT
