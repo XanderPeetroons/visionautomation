@@ -46,9 +46,12 @@ class MyWindow(QMainWindow):
         self.drawProcessed = False
 
         ### FONT VARIABLE
-        self.fontvar = QFont('Times', 16)
+        self.fontvar = QFont('Times', 18)
         self.fontvar.setBold(True)
 
+        ### FONT FOR CONTENT
+        self.fontcontent = QFont('Times', 13)
+        self.boxtitles = QFont('Times', 16)
 
         """
         1: TOP LEFT: CAMERA IMAGE + AREA OF INTEREST
@@ -86,11 +89,13 @@ class MyWindow(QMainWindow):
 
         self.bcrop = QPushButton(self)
         self.bcrop.setText("Show zoom image")
+        self.bcrop.setFont(self.fontcontent)
         self.bcrop.clicked.connect(self.get_cropped)
         self.bcrop.setMaximumSize(int(400/3240*width),int(80/2160*height))
 
         self.bprocess = QPushButton(self)
         self.bprocess.setText("Show processed image")
+        self.bprocess.setFont(self.fontcontent)
         self.bprocess.clicked.connect(self.get_processed)
         self.bprocess.setMaximumSize(int(400/3240*width),int(80/2160*height))
 
@@ -124,26 +129,36 @@ class MyWindow(QMainWindow):
         self.images.setFixedHeight(int(3/5*height))
         
         self.chip = QLabel("Chip",self)
+        self.chip.setFont(self.fontcontent)
         self.fiber = QLabel("Fiber",self)
+        self.fiber.setFont(self.fontcontent)
         self.foldertext = QLabel("In directory: visionautomation/"+self.directory,self)
-        
-        self.thresh = QLabel("Binary threshold [Integer between 1 and 250]: ",self)
-        self.clust = QLabel("Angle detection [Integer between 1 and 10]: ",self)
-        self.cordet = QLabel("Corner detection [Real number between 0 and 1]: ",self)
-        
+        self.foldertext.setFont(self.fontcontent)
+
+        self.thresh = QLabel("Binary threshold: ",self)
+        self.thresh.setFont(self.fontcontent)
+        self.clust = QLabel("Angle detection: ",self)
+        self.clust.setFont(self.fontcontent)
+        self.cordet = QLabel("Corner detection: ",self)
+        self.cordet.setFont(self.fontcontent)
+
         self.alpha1label = QLabel("Angle between chip and vertical axis: ",self)
+        self.alpha1label.setFont(self.fontcontent)
         self.alpha2label = QLabel("Angle between fiber and chip edge: ",self)
+        self.alpha2label.setFont(self.fontcontent)
         self.tethalabel = QLabel("Distance between chip and fiber (Corner detection): ",self)
+        self.tethalabel.setFont(self.fontcontent)
         self.dlinelabel = QLabel("Distance between chip and fiber (Line detection): ",self)
-      
+        self.dlinelabel.setFont(self.fontcontent)
+
         self.alpha1value = QLabel(self)
-        self.alpha1value.setStyleSheet("background-color:red")
+        self.alpha1value.setStyleSheet("background-color:lightgreen; font-size: 14pt")
         self.alpha2value = QLabel(self)
-        self.alpha2value.setStyleSheet("background-color: lightgreen")
+        self.alpha2value.setStyleSheet("background-color:red; font-size: 14pt")
         self.tethavalue = QLabel(self)
-        self.tethavalue.setStyleSheet("background-color:#ADD8E6") #lightblue
+        self.tethavalue.setStyleSheet("background-color:#ADD8E6; font-size: 14pt") #lightblue
         self.dlinevalue = QLabel(self)
-        self.dlinevalue.setStyleSheet("background-color:yellow")
+        self.dlinevalue.setStyleSheet("background-color:yellow; font-size: 14pt")
 
 
         # INPUT TEXT
@@ -158,7 +173,7 @@ class MyWindow(QMainWindow):
         self.cornerf.setMinimum(0)
         self.cornerf.setMaximum(100)
         self.cornerf.setValue(20)
-        self.cornerf.setMaximumSize(int(120/3240*width),int(30/2160*height))
+        self.cornerf.setMaximumSize(int(200/3240*width),int(30/2160*height))
         self.cornerf.valueChanged.connect(self.valueCornerDetection)
 
         self.chipvalue = QLineEdit(placeholderText = str(self.nb_cluster_components[0]))
@@ -172,7 +187,7 @@ class MyWindow(QMainWindow):
         self.chipvalue.setMinimum(1)
         self.chipvalue.setMaximum(100)
         self.chipvalue.setValue(20)
-        self.chipvalue.setMaximumSize(int(120/3240*width),int(30/2160*height))
+        self.chipvalue.setMaximumSize(int(200/3240*width),int(30/2160*height))
         self.chipvalue.valueChanged.connect(self.valueChipCluster)
 
         self.fibervalue = QLineEdit(placeholderText = str(self.nb_cluster_components[1]))
@@ -186,7 +201,7 @@ class MyWindow(QMainWindow):
         self.fibervalue.setMinimum(1)
         self.fibervalue.setMaximum(100)
         self.fibervalue.setValue(20)
-        self.fibervalue.setMaximumSize(int(120/3240*width),int(30/2160*height))
+        self.fibervalue.setMaximumSize(int(200/3240*width),int(30/2160*height))
         self.fibervalue.valueChanged.connect(self.valueFiberCluster)
 
         self.contourc = QLineEdit(placeholderText = "...")
@@ -200,7 +215,7 @@ class MyWindow(QMainWindow):
         self.contourc.setMinimum(1)
         self.contourc.setMaximum(250)
         self.contourc.setValue(20)
-        self.contourc.setMaximumSize(int(120/3240*width),int(30/2160*height))
+        self.contourc.setMaximumSize(int(200/3240*width),int(30/2160*height))
         self.contourc.valueChanged.connect(self.valueChipContour)
 
         self.contourf = QLineEdit(placeholderText = "...")
@@ -214,20 +229,22 @@ class MyWindow(QMainWindow):
         self.contourf.setMinimum(1)
         self.contourf.setMaximum(250)
         self.contourf.setValue(20)
-        self.contourf.setMaximumSize(int(120/3240*width),int(30/2160*height))
+        self.contourf.setMaximumSize(int(200/3240*width),int(30/2160*height))
         self.contourf.valueChanged.connect(self.valueFiberContour)
         
         # BUTTONS
         self.bleft = QPushButton(self)
         self.bleft.setText("Left")
+        self.bleft.setFont(self.fontcontent)
         self.bleft.clicked.connect(self.clickleft)
-        self.bleft.setMaximumSize(int(180/3240*width),int(80/2160*height))
+        self.bleft.setMaximumSize(int(180/3240*width),int(100/2160*height))
         # self.bup.move(1600,430)
 
         self.bright = QPushButton(self)
         self.bright.setText("Right")
+        self.bright.setFont(self.fontcontent)
         self.bright.clicked.connect(self.clickright)
-        self.bright.setMaximumSize(int(180/3240*width),int(80/2160*height))
+        self.bright.setMaximumSize(int(180/3240*width),int(100/2160*height))
 
         self.textline = QLineEdit()
         self.textline.textChanged.connect(self.textchanged)
@@ -236,8 +253,9 @@ class MyWindow(QMainWindow):
 
         self.bnext = QPushButton(self)
         self.bnext.setText("Next Image")
+        self.bnext.setFont(self.fontcontent)
         self.bnext.clicked.connect(self.clicknext)
-        self.bnext.setMaximumSize(int(180/3240*width),int(80/2160*height))
+        self.bnext.setMaximumSize(int(180/3240*width),int(100/2160*height))
         self.bnext.setGeometry(int(2900/3240*width),int(100/2160*height),int(120/3240*width),int(40/2160*height))
 
         self.textparameter = QLineEdit()
@@ -247,8 +265,9 @@ class MyWindow(QMainWindow):
 
         self.bbrowse = QPushButton(self)
         self.bbrowse.setText("Select")
+        self.bbrowse.setFont(self.fontcontent)
         self.bbrowse.clicked.connect(self.browse)
-        self.bbrowse.setMaximumSize(int(180/3240*width),int(80/2160*height))
+        self.bbrowse.setMaximumSize(int(180/3240*width),int(100/2160*height))
 
         """
         LAY OUT
@@ -261,11 +280,14 @@ class MyWindow(QMainWindow):
         inputslayout = QGridLayout()
         resultslayout = QGridLayout()
 
-        boxofbuttons = QGroupBox(str("Buttons title"))
-        boxofbuttons.setFixedSize(int(1/3*width),int(1/7*height))
-        boxofinputs = QGroupBox(str("Processing parameters"))
+        boxofbuttons = QGroupBox(str("Control Pannel"))
+        boxofbuttons.setFont(self.boxtitles)
+        boxofbuttons.setFixedSize(int(1/4*width),int(1/5*height))
+        boxofinputs = QGroupBox(str("Adjustable parameters"))
+        boxofinputs.setFont(self.boxtitles)
         boxofresults = QGroupBox(str("Results"))
-        boxofresults.setFixedSize(int(1/3*width),int(1/7*height))
+        boxofresults.setFont(self.boxtitles)
+        boxofresults.setFixedSize(int(1/3*width),int(1/5*height))
 
         layout.addWidget(self.images, 0, 0, 1, 3) ## label covering half of window
 
