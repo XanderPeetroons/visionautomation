@@ -157,7 +157,7 @@ class MyWindow(QMainWindow):
         self.cornerf.setTickInterval(1)
         self.cornerf.setMinimum(0)
         self.cornerf.setMaximum(100)
-        self.cornerf.setValue(20)
+        self.cornerf.setValue(self.quality*100)
         self.cornerf.setMaximumSize(int(120/3240*width),int(30/2160*height))
         self.cornerf.valueChanged.connect(self.valueCornerDetection)
 
@@ -171,7 +171,7 @@ class MyWindow(QMainWindow):
         self.chipvalue.setTickInterval(1)
         self.chipvalue.setMinimum(1)
         self.chipvalue.setMaximum(100)
-        self.chipvalue.setValue(20)
+        self.chipvalue.setValue(self.nb_cluster_components[0]*10)
         self.chipvalue.setMaximumSize(int(120/3240*width),int(30/2160*height))
         self.chipvalue.valueChanged.connect(self.valueChipCluster)
 
@@ -185,7 +185,7 @@ class MyWindow(QMainWindow):
         self.fibervalue.setTickInterval(1)
         self.fibervalue.setMinimum(1)
         self.fibervalue.setMaximum(100)
-        self.fibervalue.setValue(20)
+        self.fibervalue.setValue(self.nb_cluster_components[1]*10)
         self.fibervalue.setMaximumSize(int(120/3240*width),int(30/2160*height))
         self.fibervalue.valueChanged.connect(self.valueFiberCluster)
 
@@ -199,7 +199,7 @@ class MyWindow(QMainWindow):
         self.contourc.setTickInterval(1)
         self.contourc.setMinimum(1)
         self.contourc.setMaximum(250)
-        self.contourc.setValue(20)
+        self.contourc.setValue(1)
         self.contourc.setMaximumSize(int(120/3240*width),int(30/2160*height))
         self.contourc.valueChanged.connect(self.valueChipContour)
 
@@ -213,7 +213,7 @@ class MyWindow(QMainWindow):
         self.contourf.setTickInterval(1)
         self.contourf.setMinimum(1)
         self.contourf.setMaximum(250)
-        self.contourf.setValue(20)
+        self.contourf.setValue(1)
         self.contourf.setMaximumSize(int(120/3240*width),int(30/2160*height))
         self.contourf.valueChanged.connect(self.valueFiberContour)
         
@@ -397,8 +397,8 @@ class MyWindow(QMainWindow):
             processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, self.nb_cluster_components, self.binary, self.threshold, self.quality)
 
             # Get initial binary threshold values from otsu function:
-            # self.contourc.setPlaceholderText(str(int(processed_image[7])))
-            # self.contourf.setPlaceholderText(str(int(processed_image[8])))
+            self.contourc.setValue(int(processed_image[7]))
+            self.contourf.setValue(int(processed_image[8]))
             # Save image
             cv.imwrite('Photos/Processed/Processed.jpg', processed_image[0])
 
