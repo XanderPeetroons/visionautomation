@@ -66,6 +66,16 @@ def canny_edge (img):
     edges = cv.Canny(img,10,50) #Arguments:  1) input image, 2) minVal, 3) maxVal, 4) aperture size (default = 3), 5) L2gradient
     return edges
 
+def auto_canny(image, sigma=0.33):
+	# compute the median of the single channel pixel intensities
+	v = np.median(image)
+	# apply automatic Canny edge detection using the computed median
+	lower = int(max(0, (1.0 - sigma) * v))
+	upper = int(min(255, (1.0 + sigma) * v))
+	edged = cv.Canny(image, lower, upper)
+	# return the edged image
+	return edged
+
 ### Perform sobel edge detection
 def sobel_edge (blur):
     sobelx = cv.Sobel(blur, ddepth=cv.CV_64F, dx=1, dy=0, ksize=3)
@@ -363,7 +373,7 @@ def variable_checking(text, typ_func, rng):
         return False
 
 ### Main function to yield processed image
-def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, binary, threshold, quality=0.1):
+def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_components, edge, threshold, quality=0.1):
     ### Step 1: Gray conversion + Smoothening
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     blur = cv.GaussianBlur(gray, (0,0), 2)
@@ -372,13 +382,12 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     img_left, img_right = img_separator(blur, vline=vline)
     
     ### Chip img processing
-    if binary[0]:
-        binary_chip = binary_threshold(img_left, threshold[0])
-        contour_chip = get_contours(binary_chip)
-        otsuchip = threshold[0]
+    if edge[0]:
+        contour_chip = auto_canny(img_left, threshold[0]) ## threshold is the sigma value from 0 to 100%
+        cannychip = threshold[0]
     else:
-        contour_chip = canny_edge(img_left)
-        otsuchip, _ = adapt_thresh_otsu(img_left)     
+        contour_chip = auto_canny(img_left)
+        cannychip = 0.33     
     
     angled_line_chip, line_params_chip, _, _, _ = get_axial_line(contour_chip, True, 'last', 20, cluster_n_components[0])
     
@@ -388,7 +397,7 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
     else:
         contrast_enhanced_fiber = img_right.copy()
     
-    if binary[1]:
+    if edge[1]:
         binary_fiber = binary_threshold(contrast_enhanced_fiber, threshold[1])
         otsufiber = threshold[1]
     else:
@@ -439,5 +448,5 @@ def get_processed_array(img, vline, upper_hline, lower_hline, cluster_n_componen
 
     height = lower_hline-upper_hline
     cropped = processed3[:,max(int(vline-height/2),0):min(int(vline+height/2),processed.shape[1])]
-    return cropped, alpha1, alpha2, distancecorner, corners, distanceline, coord, otsuchip, otsufiber, contour_chip, contour_fiber
+    return cropped, alpha1, alpha2, distancecorner, corners, distanceline, coord, cannychip, otsufiber, contour_chip, contour_fiber
 

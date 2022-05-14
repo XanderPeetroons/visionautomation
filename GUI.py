@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import cv2 as cv
+from pandas import value_counts
 from img_processing import *
 import sys
 from matplotlib.figure import Figure
@@ -36,8 +37,8 @@ class MyWindow(QMainWindow):
         self.midline = 350
 
         ### Variable for binary, threshold, cluster and quality factor
-        self.binary = [False, False]
-        self.threshold = [63, 135]
+        self.edge = [False, False]
+        self.threshold = [0.33, 135]
         self.nb_cluster_components = [5,5]
         self.quality = 0.2
 
@@ -135,7 +136,7 @@ class MyWindow(QMainWindow):
         self.foldertext = QLabel("In directory: visionautomation/"+self.directory,self)
         self.foldertext.setFont(self.fontcontent)
 
-        self.thresh = QLabel("Binary threshold: ",self)
+        self.thresh = QLabel("Edge detection: ",self)
         self.thresh.setFont(self.fontcontent)
         self.clust = QLabel("Angle detection: ",self)
         self.clust.setFont(self.fontcontent)
@@ -204,17 +205,17 @@ class MyWindow(QMainWindow):
         self.fibervalue.setMaximumSize(int(200/3240*width),int(30/2160*height))
         self.fibervalue.valueChanged.connect(self.valueFiberCluster)
 
-        self.contourc = QLineEdit(placeholderText = "...")
-        self.contourc.textChanged.connect(self.binarychip)
+        self.contourc = QLineEdit(placeholderText = "...")#str(self.threshold[0]))
+        self.contourc.textChanged.connect(self.cannychip)
         self.contourc.setMaximumWidth(100)
 
         self.contourc = QSlider()
         self.contourc.setOrientation(Qt.Horizontal)
         self.contourc.setTickPosition(QSlider.TicksBelow)
         self.contourc.setTickInterval(1)
-        self.contourc.setMinimum(1)
-        self.contourc.setMaximum(250)
-        self.contourc.setValue(1)
+        self.contourc.setMinimum(0)
+        self.contourc.setMaximum(100)
+        self.contourc.setValue(int(self.threshold[0]*100))
         self.contourc.setMaximumSize(int(200/3240*width),int(30/2160*height))
         self.contourc.valueChanged.connect(self.valueChipContour)
 
@@ -416,10 +417,9 @@ class MyWindow(QMainWindow):
             pxltopline = int(self.topline/800*size[0])
             pxlbotline = int(self.botline/800*size[0])
 
-            processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, self.nb_cluster_components, self.binary, self.threshold, self.quality)
-
-            # Get initial binary threshold values from otsu function:
-            self.contourc.setValue(int(processed_image[7]))
+            processed_image = get_processed_array(img, pxlmidline, pxltopline, pxlbotline, self.nb_cluster_components, self.edge, self.threshold, self.quality)
+            # Get initial threshold values for chip and :
+            self.contourc.setValue(int(processed_image[7]*100))
             self.contourf.setValue(int(processed_image[8]))
             # Save image
             cv.imwrite('Photos/Processed/Processed.jpg', processed_image[0])
@@ -474,18 +474,19 @@ class MyWindow(QMainWindow):
         self.quality = value
 
     def valueChipContour(self):
-        self.threshold[0] = int(self.contourc.value())
-        self.binary[0] = True
+        value = self.contourc.value()/100
+        self.threshold[0] = value
+        self.edge[0] = True
 
 
     def valueFiberContour(self):
         self.threshold[1] = int(self.contourf.value())
-        self.binary[1] = True
+        self.edge[1] = True
  
     def valueChipCluster(self):
         value = self.chipvalue.value()/10
         self.nb_cluster_components[0] = int(value)
-        print(self.nb_cluster_components)
+        #print(self.nb_cluster_components)
 
     def valueFiberCluster(self):
         value = self.fibervalue.value()/10
@@ -539,23 +540,23 @@ class MyWindow(QMainWindow):
             self.nb_cluster_components[1] = 5 
 
 
-    def binarychip(self, text):
-        if variable_checking(text, int, [0, 251]):
-            self.binary[0] = True
-            self.threshold[0] = int(text)
+    def cannychip(self, text):
+        if variable_checking(text, float, [0, 1]):
+            self.edge[0] = True
+            self.threshold[0] = float(text)
         else:
             print(text + ' is not a valid value')
-            self.binary[0] = False
-            self.threshold[0] = 63
+            self.edge[0] = False
+            self.threshold[0] = 0.33
         
 
     def binaryfiber(self, text):
         if variable_checking(text, int, [0, 251]):
-            self.binary[1] = True
+            self.edge[1] = True
             self.threshold[1] = int(text)
         else:
             print(text + ' is not a valid value')
-            self.binary[1] = False
+            self.edge[1] = False
             self.threshold[1] = 135
 
 
